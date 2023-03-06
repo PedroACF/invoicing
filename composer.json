@@ -1,0 +1,28 @@
+{
+    "name": "pedro_acf/invoicing",
+    "description": "Facturacion en linea",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Pedro Alfonzo Condori Fernandez",
+            "email": "pedro.acf.3@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "ext-soap": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "PedroACF\\Invoicing\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "PedroACF\\Invoicing\\InvoicingServiceProvider"
+            ]
+        }
+    }
+}
