@@ -4,7 +4,7 @@ namespace PedroACF\Invoicing\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Legend extends Model
+class EmissionType extends Model
 {
-    protected $table = 'siat_legends';
+    protected $table = 'siat_emission_types';
 }

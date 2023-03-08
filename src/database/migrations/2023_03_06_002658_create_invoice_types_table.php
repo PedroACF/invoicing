@@ -17,6 +17,7 @@ class CreateInvoiceTypesTable extends Migration
             $table->id();
             $table->string('codigo_clasificador');
             $table->text('descripcion');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }

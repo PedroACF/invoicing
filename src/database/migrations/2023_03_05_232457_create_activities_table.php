@@ -18,6 +18,7 @@ class CreateActivitiesTable extends Migration
             $table->string('codigo_caeb');
             $table->text('descripcion');
             $table->string('tipo_actividad');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }

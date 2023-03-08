@@ -11,7 +11,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "ext-soap": "*"
+        "ext-soap": "*",
+        "nesbot/carbon": "^2.64.0"
     },
     "autoload": {
         "psr-4": {

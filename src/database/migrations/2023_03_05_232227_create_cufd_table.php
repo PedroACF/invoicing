@@ -16,7 +16,10 @@ class CreateCufdTable extends Migration
         Schema::create('siat_cufd', function (Blueprint $table) {
             $table->id();
             $table->text('cufd');
+            $table->string('codigo_control');
+            $table->string('direccion');
             $table->dateTime('expired_date');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }

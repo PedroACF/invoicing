@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 
 class ListaActividadesResponse extends BaseResponse
 {
-    public $listaActividades = [];
+    public $items = [];
 
     public static function build($response){
         $array = json_decode(json_encode($response), true);
@@ -14,15 +14,15 @@ class ListaActividadesResponse extends BaseResponse
         $object = new ListaActividadesResponse();
         $object->buildBase($resp);
 
-        $activities = [];
+        $items = [];
         foreach (Arr::get($resp, 'listaActividades', [] ) as $item){
-            $activities[] = new Actividad(
+            $items[] = new Actividad(
                 Arr::get($item, 'codigoCaeb', ""),
                 Arr::get($item, 'descripcion', ""),
                 Arr::get($item, 'tipoActividad', ""),
             );
         }
-        $object->listaActividades = $activities;
+        $object->items = $items;
         return $object;
     }
 }

@@ -13,10 +13,11 @@ class CreateSalePointTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('sale_point_types', function (Blueprint $table) {
+        Schema::create('siat_sale_point_types', function (Blueprint $table) {
             $table->id();
             $table->string('codigo_clasificador');
             $table->text('descripcion');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ class CreateSalePointTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sale_point_types');
+        Schema::dropIfExists('siat_sale_point_types');
     }
 }

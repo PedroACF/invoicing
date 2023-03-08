@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateActivityDocsTable extends Migration
+class CreateActivityDocSectorsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,12 @@ class CreateActivityDocsTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_activity_docs', function (Blueprint $table) {
+        Schema::create('siat_activity_doc_sectors', function (Blueprint $table) {
             $table->id();
             $table->string('codigo_actividad');
             $table->string('codigo_documento_sector');
             $table->string('tipo_documento_sector');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }

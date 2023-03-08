@@ -1,6 +1,7 @@
 <?php
 namespace PedroACF\Invoicing\Requests\DataSync;
 use PedroACF\Invoicing\Requests\BaseRequest;
+use PedroACF\Invoicing\Utils\TokenUtils;
 
 class SincronizacionRequest extends BaseRequest
 {
@@ -13,12 +14,13 @@ class SincronizacionRequest extends BaseRequest
 
     public function __construct($cuis)
     {
+        $tokenReg = TokenUtils::getValidTokenReg();
         $this->requestName = "SolicitudSincronizacion";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoPuntoVenta = 0;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = config("siat_invoicing.office");
+        $this->codigoSucursal = $tokenReg->sucursal;
         $this->cuis = $cuis;
-        $this->nit = config("siat_invoicing.nit");
+        $this->nit = $tokenReg->nit;
     }
 }

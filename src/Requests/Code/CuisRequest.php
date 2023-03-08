@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Requests\Code;
 
 use PedroACF\Invoicing\Requests\BaseRequest;
+use PedroACF\Invoicing\Utils\TokenUtils;
 
 class CuisRequest extends BaseRequest
 {
@@ -15,13 +16,14 @@ class CuisRequest extends BaseRequest
 
     public function __construct()
     {
+        $tokenReg = TokenUtils::getValidTokenReg();
         $this->requestName = "SolicitudCuis";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoModalidad = config("siat_invoicing.mode");
         $this->codigoPuntoVenta = 0;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = config("siat_invoicing.office");
-        $this->nit = config("siat_invoicing.nit");
+        $this->codigoSucursal = $tokenReg->sucursal;
+        $this->nit = $tokenReg->nit;
     }
 
 }

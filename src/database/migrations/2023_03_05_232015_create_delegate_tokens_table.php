@@ -11,6 +11,7 @@ class CreateDelegateTokensTable extends Migration
      *
      * @return void
      */
+    //4007190
     public function up()
     {
         Schema::create('siat_delegate_tokens', function (Blueprint $table) {
@@ -19,6 +20,7 @@ class CreateDelegateTokensTable extends Migration
             $table->integer('sucursal');//
             $table->text('token');
             $table->dateTime('fecha_expiracion');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }
