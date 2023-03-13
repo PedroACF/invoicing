@@ -44,13 +44,13 @@ class CodeRepository
         return CuisResponse::build($response);
     }
 
-    public function notificaCertificadoRevocado(){
+    /*public function notificaCertificadoRevocado(){
         return $this->client->call('notificaCertificadoRevocado');
     }
 
     public function verificarNit(){
         return $this->client->call('verificarNit');
-    }
+    }*/
 
     public function verificarComunicacion(): CodeComunicacionResponse{
         $response = $this->client->verificarComunicacion();
