@@ -2,3 +2,9 @@
 /composer.lock
 /.idea
 /.vscode
+
+
+vendor
+composer.lock
+.idea
+.vscode
