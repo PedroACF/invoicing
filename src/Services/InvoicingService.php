@@ -4,9 +4,7 @@ namespace PedroACF\Invoicing\Services;
 
 class InvoicingService
 {
-    public function syncronizarCatalogos(){
+    public function sendInvoice(){
 
     }
-
-
 }
