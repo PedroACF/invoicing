@@ -4,6 +4,9 @@ namespace PedroACF\Invoicing\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
+use PedroACF\Invoicing\Invoices\EInvoice;
+use PedroACF\Invoicing\Invoices\HeaderEInvoice;
+use PedroACF\Invoicing\Services\KeyService;
 
 class SiatInvoicesTest extends Command
 {
@@ -14,13 +17,23 @@ class SiatInvoicesTest extends Command
      */
     protected $signature = 'siat:test';
     private $salePoint = 0;
+    private $delegatedToken = '';
+    private $dateToken = '';
+    private $privateKeyContent = '';
+    private $privateKeyExtension = '';
+    private $privateKeyPassword = '';
+    private $publicKeyContent = '';
+    private $publicKeyExtension = '';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Test invoice package';
+
+    private $keyService;
+    private $tokenService;
 
     /**
      * Create a new command instance.
@@ -29,6 +42,8 @@ class SiatInvoicesTest extends Command
      */
     public function __construct()
     {
+        $this->keyService = new KeyService();
+        //$this->tokenService = new Service
         parent::__construct();
     }
 
@@ -39,8 +54,46 @@ class SiatInvoicesTest extends Command
      */
     public function handle()
     {
+        $this->readDelegateToken();
+        $this->readDateToken();
+        $this->readPublicKey();
+        $this->readPrivateKey();
+
+        if($this->publicKeyExtension == 'crt'){
+            $this->keyService->addPublicKeyFromCrt($this->publicKeyContent);
+        }else{//pem
+            $this->keyService->addPublicKeyFromPem($this->publicKeyContent);
+        }
+
+        if($this->privateKeyExtension == 'p12'){
+            $this->keyService->addPrivateKeyFromP12($this->privateKeyContent, $this->privateKeyPassword);
+        }else{//pem
+            $this->keyService->addPrivateKeyFromPem($this->privateKeyContent);
+        }
+
+        $invoiceHeader = new HeaderEInvoice();
+        $eInvoice = new EInvoice('facturaElectronicaCompraVenta', $invoiceHeader);
+        file_put_contents(base_path().'/salida2.xml', $eInvoice->getSignedInvoiceXml());
+        //dd($eInvoice->getSignedInvoiceXml());
+
+//        $this->salePoint = 0;
+//        while($this->salePoint<=1){
+//            $this->etapaI();
+//            $this->etapaII();
+//            $this->etapaIII();
+//            $this->etapaIV();
+//            $this->etapaV();
+//            $this->etapaVI();
+//            $this->etapaVII();
+//            $this->etapaVIII();
+//            $this->salePoint++;
+//        }
+
+
+    }
+
+    private function readDelegateToken(){
         $tokenValidator = [ 'token' => 'required' ];
-        $dateValidator = [ 'date' => 'required|date_format:Y-m-d' ];
         $showPrompt = true;
         while($showPrompt){
             $dToken = $this->ask('Token Delegado');
@@ -52,8 +105,12 @@ class SiatInvoicesTest extends Command
                 continue;
             }
             $showPrompt = false;
+            $this->delegatedToken = $dToken;
         }
+    }
 
+    private function readDateToken(){
+        $dateValidator = [ 'date' => 'required|date_format:Y-m-d' ];
         $showPrompt = true;
         while($showPrompt){
             $dtDate = $this->ask('Fecha límite (YYYY-MM-DD)');
@@ -65,19 +122,47 @@ class SiatInvoicesTest extends Command
                 continue;
             }
             $showPrompt = false;
+            $this->dateToken = $dtDate;
         }
+    }
 
-        $this->salePoint = 0;
-        while($this->salePoint<=1){
-            $this->etapaI();
-            $this->etapaII();
-            $this->etapaIII();
-            $this->etapaIV();
-            $this->etapaV();
-            $this->etapaVI();
-            $this->etapaVII();
-            $this->etapaVIII();
-            $this->salePoint++;
+    private function readPublicKey(){
+        $showPrompt = true;
+        while($showPrompt){
+            $keyPath = $this->ask('Ruta del certificado publico (.crt, .pem): ');
+            $validator = Validator::make([], []);
+            try{
+                $content = file_get_contents($keyPath);
+                $this->publicKeyContent = $content;
+                $this->publicKeyExtension = last(explode(".", $keyPath));
+                $showPrompt = false;
+            }catch(\Exception $e){
+                $validator->errors()->add('key', $e->getMessage());
+                $errors = $validator->errors()->messages()['key'];
+                $errors = implode(', ', $errors);
+                $this->writeMessage("> Error: $errors", false, 'error');
+            }
+        }
+    }
+
+    private function readPrivateKey(){
+        $showPrompt = true;
+        while($showPrompt){
+            $keyPath = $this->ask('Ruta del certificado privado (.pem, .p12): ');
+            $keyPassword = $this->ask('Password para el certificado privado: ');
+            $validator = Validator::make([], []);
+            try{
+                $content = file_get_contents($keyPath);
+                $this->privateKeyContent = $content;
+                $this->privateKeyExtension = last(explode(".", $keyPath));
+                $this->privateKeyPassword = $keyPassword;
+                $showPrompt = false;
+            }catch(\Exception $e){
+                $validator->errors()->add('key', $e->getMessage());
+                $errors = $validator->errors()->messages()['key'];
+                $errors = implode(', ', $errors);
+                $this->writeMessage("> Error: $errors", false, 'error');
+            }
         }
     }
 
