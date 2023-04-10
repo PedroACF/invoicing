@@ -9,7 +9,7 @@ class BaseDetailInvoice
         $xmlDetail = $xmlInstance->createElement("detalle");
         foreach($this as $key => $value){
             $xmlChild = $xmlInstance->createElement($key, $value);
-            if($value == null){
+            if($value === null){
                 $xmlAttr = $xmlInstance->createAttribute("xsi:nil");
                 $xmlAttr->value = "true";
                 $xmlChild->appendChild($xmlAttr);

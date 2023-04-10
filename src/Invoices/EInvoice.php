@@ -18,6 +18,13 @@ class EInvoice
 
     public function addDetail(BaseDetailInvoice $detail){
         $this->details[] = $detail;
+        $sum = 0;
+        foreach($this->details as $det){
+            $sum = $sum + $det->subTotal;
+        }
+        $this->header->montoTotal = $sum;
+        $this->header->montoTotalSujetoIva = $sum * 1;
+        $this->header->montoTotalMoneda = $sum * $this->header->tipoCambio;
     }
 
     public function clearDetails(){
@@ -26,7 +33,8 @@ class EInvoice
 
     public function toXml(): DOMDocument{
         $xml = new DOMDocument('1.0', "UTF-8");
-
+        $xml->formatOutput = false;
+        $xml->preserveWhiteSpace = false;
         $xmlRoot = $xml->createElement($this->rootName);
 
         $xmlAttr = $xml->createAttribute("xmlns:xsi");
@@ -50,6 +58,7 @@ class EInvoice
 
     public function getSignedInvoiceXml(): string{
         $xml = $this->toXml();
+        //dd($xml->saveXML());
         $signer = new XmlSigner($xml);
         return $signer->sign();
     }

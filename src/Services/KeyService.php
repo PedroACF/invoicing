@@ -39,7 +39,7 @@ class KeyService
 
     public function addPrivateKeyFromP12($p12Content, $password){
         $status = openssl_pkcs12_read($p12Content, $cert, $password);
-        dd($cert);
+        //dd($cert);
         $privateKeyPemContent = (string)$cert['pkey'];
         $this->addPrivateKeyFromPem($privateKeyPemContent);
     }
@@ -53,7 +53,10 @@ class KeyService
         if($model){
             $regexPattern = '/'.'-----BEGIN CERTIFICATE-----'.'(.+)'.'-----END CERTIFICATE-----'.'/Us';
             preg_match($regexPattern, $model, $matches);
-            return trim($matches[1]);
+            $content = $matches[1];
+            $content = str_replace(['\r\n', '\n'], '', $content);
+            $content = str_replace('\/', '/', $content);
+            return $content;
         }
         return null;
     }

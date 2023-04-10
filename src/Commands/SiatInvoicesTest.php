@@ -2,11 +2,16 @@
 
 namespace PedroACF\Invoicing\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
+use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
 use PedroACF\Invoicing\Services\KeyService;
+use PedroACF\Invoicing\Utils\XmlSigner;
+
+use Faker\Factory as Faker;
 
 class SiatInvoicesTest extends Command
 {
@@ -71,9 +76,66 @@ class SiatInvoicesTest extends Command
             $this->keyService->addPrivateKeyFromPem($this->privateKeyContent);
         }
 
+        //utils
+        $now = Carbon::now();
+        $faker = Faker::create('es_PE');
+
         $invoiceHeader = new HeaderEInvoice();
+        $invoiceHeader->nitEmisor = '1023757028';
+        $invoiceHeader->razonSocialEmisor = 'GOBIERNO AUTÓNOMO MUNICIPAL DE POTOSÍ';
+        $invoiceHeader->municipio = 'POTOSI';
+        $invoiceHeader->telefono = '6223142';
+        $invoiceHeader->numeroFactura = 1;
+        //$invoiceHeader->cuf = 'ASDQW12';
+        //$invoiceHeader->cufd = 'ASDQW12';
+        $invoiceHeader->codigoSucursal = 0;
+        $invoiceHeader->direccion = 'Plaza 10 de noviembre';
+        $invoiceHeader->fechaEmision = $now->format("Y-m-d\TH:i:s.v");
+        $invoiceHeader->nombreRazonSocial = $faker->name;
+        $invoiceHeader->codigoTipoDocumentoIdentidad = $faker->numberBetween(1, 5);
+        $invoiceHeader->numeroDocumento = $faker->randomNumber(8, true);
+        $hasComplement = rand(0,1) == 1;
+        if($hasComplement){
+            $invoiceHeader->complemento = ($faker->randomLetter()).($faker->randomDigit());
+        }
+        $invoiceHeader->codigoCliente = $faker->randomNumber();
+        $invoiceHeader->codigoMetodoPago = 1;
+        $invoiceHeader->montoTotal = 0;
+        $invoiceHeader->montoTotalSujetoIva = 0;
+        $invoiceHeader->codigoMoneda = 1;
+        $invoiceHeader->tipoCambio = 1.00000;
+        $invoiceHeader->montoTotalMoneda = 0;
+        $invoiceHeader->montoGiftCard = 0;
+        $invoiceHeader->descuentoAdicional = 0.00;
+        $invoiceHeader->codigoExcepcion = 0;//para nit invalidos 0=>registro normal, 1=> se autoriza el registro
+        $invoiceHeader->leyenda = $faker->sentence(10);
+        $invoiceHeader->usuario = $faker->regexify('[A-Z]{5}[0-4]{3}');
+        $invoiceHeader->codigoDocumentoSector = 1;
+
         $eInvoice = new EInvoice('facturaElectronicaCompraVenta', $invoiceHeader);
-        file_put_contents(base_path().'/salida2.xml', $eInvoice->getSignedInvoiceXml());
+        for($i=0;$i<$faker->numberBetween(1, 3); $i++){
+            $detail = new DetailEInvoice();
+            $detail->actividadEconomica = $faker->randomNumber();
+            $detail->codigoProductoSin = $faker->randomNumber();
+            $detail->codigoProducto = $faker->randomNumber();
+            $detail->descripcion = $faker->sentence(10);
+            $qty = $faker->randomNumber(1, 10);
+            $detail->cantidad = $qty;
+            $detail->unidadMedida = $faker->randomNumber();
+            $price = $faker->randomFloat(5, 1, 100);
+            $detail->precioUnitario = $price;
+            $detail->montoDescuento = 0.0;
+            $detail->subTotal = $qty*$price;
+            $detail->numeroImei = 0.0;
+            $eInvoice->addDetail($detail);
+        }
+        $xmlString = $eInvoice->toXml()->saveXML();
+        file_put_contents(base_path().'/factura.xml', $xmlString);
+        $xml = new \DOMDocument();
+        $xml->loadXML(file_get_contents(base_path().'/factura.xml'));
+        $signer = new XmlSigner($xml);
+        $signed = $signer->sign();
+        file_put_contents(base_path().'/factura.firmada.xml', $signed);
         //dd($eInvoice->getSignedInvoiceXml());
 
 //        $this->salePoint = 0;

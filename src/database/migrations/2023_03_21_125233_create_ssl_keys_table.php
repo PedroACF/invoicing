@@ -16,7 +16,7 @@ class CreateSslKeysTable extends Migration
     {
         Schema::create('siat_ssl_keys', function (Blueprint $table) {
             $table->id();
-            $table->text('content');
+            $table->binary('content');
             $table->enum('type', SslKey::getEnumTypes());
             $table->boolean('enabled')->default(true);
             $table->timestamps();
