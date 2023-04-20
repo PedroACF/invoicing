@@ -33,8 +33,9 @@ class EInvoice
 
     public function toXml(): DOMDocument{
         $xml = new DOMDocument('1.0', "UTF-8");
-        $xml->formatOutput = false;
         $xml->preserveWhiteSpace = false;
+        $xml->formatOutput = false;
+        $xml->xmlStandalone = false;
         $xmlRoot = $xml->createElement($this->rootName);
 
         $xmlAttr = $xml->createAttribute("xmlns:xsi");

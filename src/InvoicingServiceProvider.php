@@ -1,7 +1,8 @@
 <?php
 namespace PedroACF\Invoicing;
 use Illuminate\Support\ServiceProvider;
-use PedroACF\Invoicing\Commands\SiatInvoicesTest;
+use PedroACF\Invoicing\Commands\SiatCheckSignature;
+use PedroACF\Invoicing\Commands\SiatServicesTest;
 
 class InvoicingServiceProvider extends ServiceProvider
 {
@@ -12,7 +13,8 @@ class InvoicingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/config/siat_invoicing.php', 'siat_invoicing');
         $this->loadMigrationsFrom(__DIR__.'/database/migrations');
         $this->commands([
-            SiatInvoicesTest::class
+            SiatServicesTest::class,
+            SiatCheckSignature::class
         ]);
     }
 

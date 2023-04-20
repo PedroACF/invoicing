@@ -7,91 +7,110 @@ use PedroACF\Invoicing\Services\KeyService;
 
 class XmlSigner
 {
-    public $xml;
     private $keyService;
-    public function __construct(\DOMDocument $xml)
+    public function __construct()
     {
-        $this->xml = $xml;
         $this->keyService = new KeyService();
     }
 
-    public function sign(): ?string{
+    public function sign(string $xmlString): ?string{
         $privateKeyEntity = $this->keyService->getAvailablePrivateKey();
         if($privateKeyEntity==null){
             throw new KeyException();
         }
-        $publicPlainCert = $this->keyService->getPublicKeyPlainText();
-        if($publicPlainCert==null){
+        $publicCert = $this->keyService->getPublicCert();
+        if($publicCert==null){
             throw new KeyException();
         }
 
-        $rootElement = $this->xml->documentElement;
-        $canonicalData = $rootElement->C14N(true, false);
-        $digest = openssl_digest($canonicalData, 'sha256', true);
+        $algUrl = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+        $algDigUrl = 'http://www.w3.org/2001/04/xmlenc#sha256';
+        $algDig = 'RSA-SHA256';
+        $alg = OPENSSL_ALGO_SHA256;
+
+        $xml = new \DOMDocument();
+        $xml->preserveWhiteSpace = false;
+        $xml->formatOutput = false;
+        $xml->xmlStandalone = false;
+        $xml->loadXML($xmlString);
+
+        // Whitespaces must be preserved
+        $rootElement = $xml->documentElement;
+        $canonicalData = $rootElement->C14N(false, true);
+        $digest = openssl_digest($canonicalData, $algDig, true);
         $digest64 = base64_encode($digest);
+        //$publicCert = openssl_pkey_get_public($publicCert);
 
-        $signatureElement = $this->xml->createElement('Signature');
+        $signatureElement = $xml->createElement('Signature');
         $signatureElement->setAttribute('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
-        $this->xml->documentElement->appendChild($signatureElement);
+        $xml->documentElement->appendChild($signatureElement);
 
-        $signedInfoElement = $this->xml->createElement('SignedInfo');
+        $signedInfoElement = $xml->createElement('SignedInfo');
         $signatureElement->appendChild($signedInfoElement);
 
-        $canonicalizationMethodElement = $this->xml->createElement('CanonicalizationMethod');
+        $canonicalizationMethodElement = $xml->createElement('CanonicalizationMethod');
         $canonicalizationMethodElement->setAttribute('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
         $signedInfoElement->appendChild($canonicalizationMethodElement);
 
-        $signatureMethodElement = $this->xml->createElement('SignatureMethod');
-        $signatureMethodElement->setAttribute('Algorithm', 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256');
+        $signatureMethodElement = $xml->createElement('SignatureMethod');
+        $signatureMethodElement->setAttribute(
+            'Algorithm',
+            $algUrl
+        );
         $signedInfoElement->appendChild($signatureMethodElement);
 
-        $referenceElement = $this->xml->createElement('Reference');
+        $referenceElement = $xml->createElement('Reference');
         $referenceElement->setAttribute('URI', '');
         $signedInfoElement->appendChild($referenceElement);
 
-        $transformsElement = $this->xml->createElement('Transforms');
+        $transformsElement = $xml->createElement('Transforms');
         $referenceElement->appendChild($transformsElement);
 
-        $transformElement = $this->xml->createElement('Transform');
+        $transformElement = $xml->createElement('Transform');
         $transformElement->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#enveloped-signature');
         $transformsElement->appendChild($transformElement);
 
-        $transformElement = $this->xml->createElement('Transform');
+        $transformElement = $xml->createElement('Transform');
         $transformElement->setAttribute('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments');
         $transformsElement->appendChild($transformElement);
 
-        $digestMethodElement = $this->xml->createElement('DigestMethod');
-        $digestMethodElement->setAttribute('Algorithm', 'http://www.w3.org/2001/04/xmlenc#sha256');
+        $digestMethodElement = $xml->createElement('DigestMethod');
+        $digestMethodElement->setAttribute('Algorithm', $algDigUrl);
         $referenceElement->appendChild($digestMethodElement);
 
-        $digestValueElement = $this->xml->createElement('DigestValue', $digest64);
+        $digestValueElement = $xml->createElement('DigestValue', $digest64);
         $referenceElement->appendChild($digestValueElement);
 
-        $signatureValueElement = $this->xml->createElement('SignatureValue', '');
+        $signatureValueElement = $xml->createElement('SignatureValue', '');
         $signatureElement->appendChild($signatureValueElement);
 
-        $c14nSignedInfo = $signedInfoElement->C14N(true, false);
+        $c14nSignedInfo = $signedInfoElement->C14N(false, false);
 
         $signature = '';
-        //========== SIGN WITH PRIVATE
-        $privateKey = openssl_pkey_get_private($privateKeyEntity->content);
-        openssl_sign($c14nSignedInfo, $signature, $privateKey, OPENSSL_ALGO_SHA256);
 
-        $xpath = new \DOMXPath($this->xml);
+        $privateKeyContent = stream_get_contents($privateKeyEntity->content);
+        $privateKey = openssl_pkey_get_private($privateKeyContent);
+
+        openssl_sign($c14nSignedInfo, $signature, $privateKey, $alg);
+
+        $xpath = new \DOMXpath($xml);
         $nodeList = $xpath->query('//SignatureValue', $signatureElement);
         $signatureValueElement = $nodeList->item(0);
         $signatureValueElement->nodeValue = base64_encode($signature);
 
-        $keyInfoElement = $this->xml->createElement('KeyInfo');
+        $keyInfoElement = $xml->createElement('KeyInfo');
         $signatureElement->appendChild($keyInfoElement);
 
-        $keyValueElement = $this->xml->createElement('X509Data');
+        $keyValueElement = $xml->createElement('X509Data');
         $keyInfoElement->appendChild($keyValueElement);
 
-        //======== PUBLIC CERT
-        $rsaKeyValueElement = $this->xml->createElement('X509Certificate', $publicPlainCert);
+        $regexPattern = '/'.'-----BEGIN CERTIFICATE-----'.'(.+)'.'-----END CERTIFICATE-----'.'/Us';
+        preg_match($regexPattern, $publicCert, $matches);
+        $publicCert =  str_replace(["\r\n", "\n"], '', trim($matches[1]));
+
+        $rsaKeyValueElement = $xml->createElement('X509Certificate', $publicCert);
         $keyValueElement->appendChild($rsaKeyValueElement);
 
-        return $this->xml->saveXML();
+        return $xml->saveXML();
     }
 }

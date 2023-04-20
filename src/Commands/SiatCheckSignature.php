@@ -3,7 +3,9 @@
 namespace PedroACF\Invoicing\Commands;
 
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
@@ -22,9 +24,6 @@ class SiatCheckSignature extends Command
      * @var string
      */
     protected $signature = 'siat:signature';
-    private $privateKeyContent = '';
-    private $privateKeyPassword = '';
-    private $publicKeyContent = '';
     private $invoicesCount = 0;
 
     /**
@@ -35,7 +34,7 @@ class SiatCheckSignature extends Command
     protected $description = 'Test signature invoices';
 
     private $keyService;
-    private $tokenService;
+    //private $tokenService;
 
     /**
      * Create a new command instance.
@@ -59,30 +58,19 @@ class SiatCheckSignature extends Command
 
         $this->readPublicKey();
         $this->readPrivateKey();
-
-        if($this->publicKeyExtension == 'crt'){
-            $this->keyService->addPublicKeyFromCrt($this->publicKeyContent);
-        }else{//pem
-            $this->keyService->addPublicKeyFromPem($this->publicKeyContent);
-        }
-
-        if($this->privateKeyExtension == 'p12'){
-            $this->keyService->addPrivateKeyFromP12($this->privateKeyContent, $this->privateKeyPassword);
-        }else{//pem
-            $this->keyService->addPrivateKeyFromPem($this->privateKeyContent);
-        }
+        $this->readInvoicesCount();
 
         //utils
         $faker = Faker::create('es_PE');
 
-        for($i=1; $i<=$this->invoicesCount; $i++){
+        for($count=1; $count<=$this->invoicesCount; $count++){
             $now = Carbon::now();
             $invoiceHeader = new HeaderEInvoice();
             $invoiceHeader->nitEmisor = '1023757028';
             $invoiceHeader->razonSocialEmisor = 'GOBIERNO AUTÓNOMO MUNICIPAL DE POTOSÍ';
             $invoiceHeader->municipio = 'POTOSI';
             $invoiceHeader->telefono = '6223142';
-            $invoiceHeader->numeroFactura = $i;
+            $invoiceHeader->numeroFactura = $count;
             //$invoiceHeader->cuf = 'ASDQW12';
             //$invoiceHeader->cufd = 'ASDQW12';
             $invoiceHeader->codigoSucursal = 0;
@@ -126,82 +114,59 @@ class SiatCheckSignature extends Command
                 $detail->numeroImei = 0.0;
                 $eInvoice->addDetail($detail);
             }
-            $xmlString = $eInvoice->toXml()->saveXML();
-            //file_put_contents(base_path().'/factura.xml', $xmlString);
-            $xml = new \DOMDocument();
-            //$xml->loadXML(file_get_contents(base_path().'/factura.xml'));
-            $xml->loadXML($xmlString);
-            $signer = new XmlSigner($xml);
-            $signedXml = $signer->sign();
+            $signer = new XmlSigner();
+            $signedXml = $signer->sign($eInvoice->toXml()->saveXML());
 
             $model = new Invoice();
             $model->content = $signedXml;
             $model->user_id = 0;
             $model->save();
-            //file_put_contents(base_path().'/factura.firmada.xml', $signed);
+            $model->refresh();
+            $stream = stream_get_contents($model->content);
+
+            $client = new Client();
+            $response = $client->post('https://validar.firmadigital.bo/rest/validar/', [
+                'headers' => ['Content-Type' => 'application/json'],
+                'json' => [
+                    'tipo' => 'text/xml',
+                    'base64' => base64_encode($stream)
+                ]
+            ]);
+
+            $resp = $response->getBody()->getContents();
+            $jsonResp = json_decode($resp);
+
+            $object = $jsonResp[0];
+            $number = str_pad($count, 3, "0", STR_PAD_LEFT);
+            $this->writeMessage("$number: $model->id > ".($object->cadenaConfianza? 'correcto': 'incorrecto').' | '.($object->noModificado? 'sin modificacion': 'modificado'), false, $object->cadenaConfianza && $object->noModificado? 'info': 'error');
         }
-
-        //dd($eInvoice->getSignedInvoiceXml());
-
-//        $this->salePoint = 0;
-//        while($this->salePoint<=1){
-//            $this->etapaI();
-//            $this->etapaII();
-//            $this->etapaIII();
-//            $this->etapaIV();
-//            $this->etapaV();
-//            $this->etapaVI();
-//            $this->etapaVII();
-//            $this->etapaVIII();
-//            $this->salePoint++;
-//        }
-
-
     }
 
-    private function readDelegateToken(){
-        $tokenValidator = [ 'token' => 'required' ];
+    private function readInvoicesCount(){
+        $rules = [ 'counter' => 'required|numeric' ];
         $showPrompt = true;
         while($showPrompt){
-            $dToken = $this->ask('Token Delegado');
-            $validator = Validator::make(['token' => $dToken], $tokenValidator);
+            $counter = $this->ask('Cantidad de facturas a generar: ');
+            $validator = Validator::make(['counter' => $counter], $rules);
             if($validator->fails()){
-                $errors = $validator->errors()->messages()['token'];
+                $errors = $validator->errors()->messages()['counter'];
                 $errors = implode(', ', $errors);
                 $this->writeMessage("> Error: $errors", false, 'error');
                 continue;
             }
             $showPrompt = false;
-            $this->delegatedToken = $dToken;
-        }
-    }
-
-    private function readDateToken(){
-        $dateValidator = [ 'date' => 'required|date_format:Y-m-d' ];
-        $showPrompt = true;
-        while($showPrompt){
-            $dtDate = $this->ask('Fecha límite (YYYY-MM-DD)');
-            $validator = Validator::make(['date' => $dtDate], $dateValidator);
-            if($validator->fails()){
-                $errors = $validator->errors()->messages()['date'];
-                $errors = implode(', ', $errors);
-                $this->writeMessage("> Error: $errors", false, 'error');
-                continue;
-            }
-            $showPrompt = false;
-            $this->dateToken = $dtDate;
+            $this->invoicesCount = $counter;
         }
     }
 
     private function readPublicKey(){
         $showPrompt = true;
         while($showPrompt){
-            $keyPath = $this->ask('Ruta del certificado publico (.crt, .pem): ');
+            $keyPath = $this->ask('Ruta del certificado publico (.pem): ');
             $validator = Validator::make([], []);
             try{
                 $content = file_get_contents($keyPath);
-                $this->publicKeyContent = $content;
-                $this->publicKeyExtension = last(explode(".", $keyPath));
+                $this->keyService->addPublicKeyFromPem($content);
                 $showPrompt = false;
             }catch(\Exception $e){
                 $validator->errors()->add('key', $e->getMessage());
@@ -215,14 +180,13 @@ class SiatCheckSignature extends Command
     private function readPrivateKey(){
         $showPrompt = true;
         while($showPrompt){
-            $keyPath = $this->ask('Ruta del certificado privado (.pem, .p12): ');
-            $keyPassword = $this->ask('Password para el certificado privado: ');
+            $keyPath = $this->ask('Ruta del certificado privado (.pem): ');
             $validator = Validator::make([], []);
             try{
                 $content = file_get_contents($keyPath);
-                $this->privateKeyContent = $content;
-                $this->privateKeyExtension = last(explode(".", $keyPath));
-                $this->privateKeyPassword = $keyPassword;
+                //$this->privateKeyContent = $content;
+                $this->keyService->addPrivateKeyFromPem($content);
+              //  $this->privateKeyPassword = $keyPassword;
                 $showPrompt = false;
             }catch(\Exception $e){
                 $validator->errors()->add('key', $e->getMessage());

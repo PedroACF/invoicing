@@ -48,15 +48,11 @@ class KeyService
         return SslKey::where('enabled', true)->where('type', SslKey::PUBLIC_KEY)->first();
     }
 
-    public function getPublicKeyPlainText(): ?string{
+    public function getPublicCert(): ?string{
         $model = $this->getAvailablePublicKey();
         if($model){
-            $regexPattern = '/'.'-----BEGIN CERTIFICATE-----'.'(.+)'.'-----END CERTIFICATE-----'.'/Us';
-            preg_match($regexPattern, $model, $matches);
-            $content = $matches[1];
-            $content = str_replace(['\r\n', '\n'], '', $content);
-            $content = str_replace('\/', '/', $content);
-            return $content;
+            $cert = stream_get_contents($model->content);
+            return $cert;
         }
         return null;
     }
