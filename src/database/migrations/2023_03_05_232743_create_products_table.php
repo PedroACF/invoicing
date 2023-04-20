@@ -14,9 +14,8 @@ class CreateProductsTable extends Migration
     public function up()
     {
         Schema::create('siat_products', function (Blueprint $table) {
-            $table->id();
+            $table->string('codigo_producto')->primary();
             $table->string('codigo_actividad');
-            $table->string('codigo_producto');
             $table->text('descripcion_producto');
             $table->boolean('activo')->default(false);
             $table->timestamps();

@@ -14,8 +14,7 @@ class CreateIdentityDocTypesTable extends Migration
     public function up()
     {
         Schema::create('siat_identity_doc_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('codigo_clasificador');
+            $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
             $table->timestamps();

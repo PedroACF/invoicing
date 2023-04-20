@@ -14,8 +14,7 @@ class CreateLegendsTable extends Migration
     public function up()
     {
         Schema::create('siat_legends', function (Blueprint $table) {
-            $table->id();
-            $table->string('codigo_actividad');
+            $table->string('codigo_actividad')->primary();
             $table->text('descripcion_leyenda');
             $table->boolean('activo')->default(false);
             $table->timestamps();

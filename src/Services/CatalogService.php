@@ -42,15 +42,13 @@ class CatalogService
         $remote = $this->repo->getActividades($syncReq);
         $activity_ids = [];
         foreach($remote->items as $activity){
-            $old = Activity::where([
-                ['codigo_caeb', '=', $activity->codigoCaeb],
-                ['descripcion', '=', $activity->descripcion],
-                ['tipo_actividad', '=', $activity->tipoActividad],
-            ])->first();
+            $old = Activity::where('codigo_caeb', $activity->codigoCaeb)->first();
             if($old){
+                $old->descripcion = $activity->descripcion;
+                $old->tipo_actividad = $activity->tipoActividad;
                 $old->activo = true;
                 $old->save();
-                $activity_ids[] = $old->id;
+                $activity_ids[] = $old->codigo_caeb;
             }else{
                 $new = new Activity();
                 $new->codigo_caeb = $activity->codigoCaeb;
@@ -61,11 +59,11 @@ class CatalogService
                 $activity_ids[] = $new->id;
             }
         }
-        Activity::whereNotIn('id', $activity_ids)->update(['activo'=>false]);
+        Activity::whereNotIn('codigo_caeb', $activity_ids)->update(['activo'=>false]);
     }
 
     public function syncFechaHora(){
-
+        $syncReq = new SincronizacionRequest($this->cuis);
     }
 
     public function syncActividadesDocumentosSector(){
@@ -100,24 +98,22 @@ class CatalogService
         $remote = $this->repo->getParamLeyendas($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Legend::where([
-                ['codigo_actividad', '=', $item->codigoActividad],
-                ['descripcion_leyenda', '=', $item->descripcionLeyenda]
-            ])->first();
+            $old = Legend::where('codigo_actividad', $item->codigoActividad)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion_leyenda = $item->descripcionLeyenda;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_actividad;
             }else{
                 $new = new Legend();
                 $new->codigo_actividad = $item->codigoActividad;
                 $new->descripcion_leyenda = $item->descripcionLeyenda;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_actividad;
             }
         }
-        Legend::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        Legend::whereNotIn('codigo_actividad', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncMensajes(){
@@ -125,24 +121,22 @@ class CatalogService
         $remote = $this->repo->getParamMensajes($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Message::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = Message::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
+                $old->descripcion = $item->descripcion;
                 $old->activo = true;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->clasificador;
             }else{
                 $new = new Message();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        Message::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        Message::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncProductos(){
@@ -150,15 +144,13 @@ class CatalogService
         $remote = $this->repo->getProductos($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Product::where([
-                ['codigo_actividad', '=', $item->codigoActividad],
-                ['codigo_producto', '=', $item->codigoProducto],
-                ['descripcion_producto', '=', $item->descripcionProducto]
-            ])->first();
+            $old = Product::where('codigo_producto', $item->codigoActividad)->first();
             if($old){
                 $old->activo = true;
+                $old->codigo_actividad = $item->codigoActividad;
+                $old->descripcion_producto = $item->descripcionProducto;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_producto;
             }else{
                 $new = new Product();
                 $new->codigo_actividad = $item->codigoActividad;
@@ -166,10 +158,10 @@ class CatalogService
                 $new->descripcion_producto = $item->descripcionProducto;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_producto;
             }
         }
-        Product::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        Product::whereNotIn('codigo_producto', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncEventosSignificativos(){
@@ -177,24 +169,22 @@ class CatalogService
         $remote = $this->repo->getParamEventosSignificativos($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = SignificantEvent::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = SignificantEvent::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new SignificantEvent();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        SignificantEvent::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        SignificantEvent::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncPaises(){
@@ -202,24 +192,22 @@ class CatalogService
         $remote = $this->repo->getParamPaises($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = SourceCountry::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = SourceCountry::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new SourceCountry();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        SourceCountry::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        SourceCountry::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncMotivosAnulacion(){
@@ -227,24 +215,22 @@ class CatalogService
         $remote = $this->repo->getParamMotivosAnulacion($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = CancelReason::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = CancelReason::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new CancelReason();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        CancelReason::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        CancelReason::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposDocumentoIdentidad(){
@@ -252,24 +238,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposDocumentoIdentidad($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = IdentityDocType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = IdentityDocType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new IdentityDocType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        IdentityDocType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        IdentityDocType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposDocumentoSector(){
@@ -277,24 +261,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposDocumentoSector($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = SectorDocType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = SectorDocType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new SectorDocType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        SectorDocType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        SectorDocType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposEmision(){
@@ -302,24 +284,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposEmision($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = EmissionType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = EmissionType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new EmissionType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        EmissionType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        EmissionType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposHabitacion(){
@@ -327,24 +307,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposHabitacion($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = RoomType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = RoomType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new RoomType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        RoomType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        RoomType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposMetodoPago(){
@@ -352,24 +330,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposMetodoPago($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = PaymentType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = PaymentType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new PaymentType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        PaymentType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        PaymentType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposMoneda(){
@@ -377,24 +353,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposMoneda($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = CurrencyType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = CurrencyType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new CurrencyType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        CurrencyType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        CurrencyType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposPuntoVenta(){
@@ -402,24 +376,22 @@ class CatalogService
         $remote = $this->repo->getParamTiposPuntoVenta($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = SalePointType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = SalePointType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
+                $old->descripcion = $item->descripcion;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new SalePointType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        SalePointType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        SalePointType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncTiposFactura(){
@@ -427,24 +399,21 @@ class CatalogService
         $remote = $this->repo->getParamTiposFactura($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = InvoiceType::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = InvoiceType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new InvoiceType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        InvoiceType::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        InvoiceType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncUnidadesMedida(){
@@ -452,24 +421,21 @@ class CatalogService
         $remote = $this->repo->getParamUnidadMedida($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Measurement::where([
-                ['codigo_clasificador', '=', $item->codigoClasificador],
-                ['descripcion', '=', $item->descripcion]
-            ])->first();
+            $old = Measurement::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
                 $old->save();
-                $item_ids[] = $old->id;
+                $item_ids[] = $old->codigo_clasificador;
             }else{
                 $new = new Measurement();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->id;
+                $item_ids[] = $new->codigo_clasificador;
             }
         }
-        Measurement::whereNotIn('id', $item_ids)->update(['activo'=>false]);
+        Measurement::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncAll(){

@@ -7,4 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class SectorDocType extends Model
 {
     protected $table = 'siat_sector_doc_types';
+    protected $primaryKey = 'codigo_clasificador';
+    public $incrementing = false;
 }

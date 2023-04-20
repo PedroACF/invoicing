@@ -14,8 +14,7 @@ class CreateActivitiesTable extends Migration
     public function up()
     {
         Schema::create('siat_activities', function (Blueprint $table) {
-            $table->id();
-            $table->string('codigo_caeb');
+            $table->string('codigo_caeb')->primary();
             $table->text('descripcion');
             $table->string('tipo_actividad');
             $table->boolean('activo')->default(false);
