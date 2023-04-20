@@ -4,21 +4,23 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateDelegateTokensTable extends Migration
+class CreateConfigsTable extends Migration
 {
     /**
      * Run the migrations.
      *
      * @return void
      */
-    //4007190
     public function up()
     {
-        Schema::create('siat_delegate_tokens', function (Blueprint $table) {
+        Schema::create('siat_configs', function (Blueprint $table) {
             $table->id();
-            $table->text('token');
-            $table->dateTime('fecha_expiracion');
-            $table->boolean('activo')->default(false);
+            $table->string('nit');
+            $table->string('business_name');
+            $table->string('municipality');
+            $table->string('phone');
+            $table->integer('office')->default(0);//sucursales
+            $table->integer('sale_point');
             $table->timestamps();
         });
     }
@@ -30,6 +32,6 @@ class CreateDelegateTokensTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_delegate_tokens');
+        Schema::dropIfExists('siat_configs');
     }
 }
