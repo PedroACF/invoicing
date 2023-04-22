@@ -20,7 +20,9 @@ class CreateConfigsTable extends Migration
             $table->string('municipality');
             $table->string('phone');
             $table->integer('office')->default(0);//sucursales
+            $table->string('office_address');
             $table->integer('sale_point');
+            $table->bigInteger('last_invoice_number')->default(0);
             $table->timestamps();
         });
     }

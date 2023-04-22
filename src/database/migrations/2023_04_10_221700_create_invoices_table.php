@@ -20,6 +20,11 @@ class CreateInvoicesTable extends Migration
         Schema::create('siat_invoices', function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('uuid_generate_v4()'));
             $table->bigInteger('number');
+            $table->string("cuf");
+            $table->string("document");
+            $table->string("client_name");
+            $table->dateTime("emission_date");
+            $table->decimal("amount", 10, 2);
             $table->binary('content');
             $table->enum('state', Invoice::getEnumTypes())->default(Invoice::ENUM_PENDANT);//VALIDA, RECHAZADA, PENDIENTE (DE ENVIO)
             $table->unsignedInteger('user_id')->nullable();

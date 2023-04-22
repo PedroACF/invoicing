@@ -8,11 +8,9 @@ use PedroACF\Invoicing\Repositories\DataSyncRepository;
 
 class ConfigService extends BaseService
 {
-    public static function addDelegateToken(string $nit = '', int $sucursal = 0, string $token = '', $expireDate = ''){
+    public static function addDelegateToken(string $token = '', $expireDate = ''){
         DelegateToken::where('activo', true)->update(['activo'=> false]);
         $newToken = new DelegateToken();
-        $newToken->nit = $nit;
-        $newToken->sucursal = $sucursal;
         $newToken->token = $token;
         $newToken->fecha_expiracion = $expireDate;
         $newToken->activo = true;
@@ -25,7 +23,7 @@ class ConfigService extends BaseService
         ])->orderBy('created_at', 'desc')->first();
     }
 
-    public static function setConfigs(string $nit, string $business_name, string $municipality, string $phone, int $office, int $sale_point){
+    public static function setConfigs(string $nit, string $business_name, string $municipality, string $phone, int $office, string $office_address, int $sale_point){
         $config = Config::first();
         if(!$config){
             $config = new Config();
@@ -35,11 +33,32 @@ class ConfigService extends BaseService
         $config->municipality = $municipality;;
         $config->phone = $phone;
         $config->office = $office;
+        $config->office_address = $office_address;
         $config->sale_point = $sale_point;
         $config->save();
     }
 
     public static function getConfigs(){
         return Config::first();
+    }
+
+    public static function setConfigSalePoint(int $salePoint){
+        $config = Config::first();
+        if($config){
+            $config->sale_point = $salePoint;
+            $config->save();
+        }
+    }
+
+    public static function getAvailableInvoiceNumber(){
+        $config = self::getConfigs();
+        if($config){
+            $availableNumber = $config->last_invoice_number;
+            $availableNumber++;
+            $config->last_invoice_number = $availableNumber;
+            $config->save();
+            return $availableNumber;
+        }
+        return -1;
     }
 }

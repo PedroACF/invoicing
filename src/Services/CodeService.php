@@ -18,9 +18,9 @@ class CodeService extends BaseService
         $this->repo = new CodeRepository();
     }
 
-    public function getCuisCode(): string{
+    public function getCuisCode($forceNew = false): string{
         $cuisModel = $this->getValidCuisModel();
-        if($cuisModel){
+        if($cuisModel && !$forceNew){
             return $cuisModel->cuis;
         }
         // Solicitar cuis nuevo y desactivar los otros
@@ -35,14 +35,14 @@ class CodeService extends BaseService
         return $newModel->cuis;
     }
 
-    public function getCufdCode(): string{
-        $cuis = $this->getCuisCode();
+    public function getCufdCode($forceNew = false): string{
         $cufdModel = $this->getValidCufdModel();
-        if($cufdModel){
+        if($cufdModel && !$forceNew){
             return $cufdModel->cufd;
         }
         // Solicitar cufd nuevo y desactivar los otros
         Cufd::where('activo', true)->update(['activo'=> false]);
+        $cuis = $this->getCuisCode();
         $cufdReq = new CufdRequest($cuis);
         $remote = $this->repo->cufd($cufdReq);
         $model = new Cufd();

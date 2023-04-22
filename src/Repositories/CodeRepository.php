@@ -15,11 +15,6 @@ class CodeRepository
 
     public function __construct()
     {
-//        $this->client = Soap::withHeaders([
-//            'apikey' => "TokenApi $token",
-//        ])->withOptions([
-//            'trace' => true,
-//        ])->baseWsdl(config("siat_invoicing.endpoints.obtencion_codigos"));
         $tokenReg = TokenUtils::getValidTokenReg();
         $wsdl = config("siat_invoicing.endpoints.obtencion_codigos");
         $token = $tokenReg->token;

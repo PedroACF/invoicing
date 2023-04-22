@@ -98,22 +98,24 @@ class CatalogService
         $remote = $this->repo->getParamLeyendas($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Legend::where('codigo_actividad', $item->codigoActividad)->first();
+            $old = Legend::where([
+                ['codigo_actividad', '=', $item->codigoActividad],
+                ['descripcion_leyenda', '=', $item->descripcionLeyenda]
+            ])->first();
             if($old){
                 $old->activo = true;
-                $old->descripcion_leyenda = $item->descripcionLeyenda;
                 $old->save();
-                $item_ids[] = $old->codigo_actividad;
+                $item_ids[] = $old->id;
             }else{
                 $new = new Legend();
                 $new->codigo_actividad = $item->codigoActividad;
                 $new->descripcion_leyenda = $item->descripcionLeyenda;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->codigo_actividad;
+                $item_ids[] = $new->id;
             }
         }
-        Legend::whereNotIn('codigo_actividad', $item_ids)->update(['activo'=>false]);
+        Legend::whereNotIn('id', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncMensajes(){
@@ -144,13 +146,15 @@ class CatalogService
         $remote = $this->repo->getProductos($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = Product::where('codigo_producto', $item->codigoActividad)->first();
+            $old = Product::where([
+                ['codigo_actividad', '=', $item->codigoActividad],
+                ['codigo_producto', '=', $item->codigoProducto],
+            ])->first();
             if($old){
                 $old->activo = true;
-                $old->codigo_actividad = $item->codigoActividad;
                 $old->descripcion_producto = $item->descripcionProducto;
                 $old->save();
-                $item_ids[] = $old->codigo_producto;
+                $item_ids[] = $old->id;
             }else{
                 $new = new Product();
                 $new->codigo_actividad = $item->codigoActividad;
@@ -158,10 +162,10 @@ class CatalogService
                 $new->descripcion_producto = $item->descripcionProducto;
                 $new->activo = true;
                 $new->save();
-                $item_ids[] = $new->codigo_producto;
+                $item_ids[] = $new->id;
             }
         }
-        Product::whereNotIn('codigo_producto', $item_ids)->update(['activo'=>false]);
+        Product::whereNotIn('id', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncEventosSignificativos(){

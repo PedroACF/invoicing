@@ -11,6 +11,7 @@
     ],
     "minimum-stability": "dev",
     "require": {
+        "brick/math": "*",
         "ext-soap": "*",
         "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
         "nesbot/carbon": "^2.64.0",

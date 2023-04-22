@@ -2,6 +2,7 @@
 namespace PedroACF\Invoicing\Requests\Code;
 
 use PedroACF\Invoicing\Requests\BaseRequest;
+use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
 class CufdRequest extends BaseRequest
@@ -16,14 +17,14 @@ class CufdRequest extends BaseRequest
 
     public function __construct($cuis)
     {
-        $tokenReg = TokenUtils::getValidTokenReg();
+        $currentConfig = ConfigService::getConfigs();
         $this->requestName = "SolicitudCufd";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoPuntoVenta = 0;
+        $this->codigoPuntoVenta = $currentConfig->sale_point;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = $tokenReg->sucursal;
+        $this->codigoSucursal = $currentConfig->office;
         $this->cuis = $cuis;
-        $this->nit = $tokenReg->nit;
+        $this->nit = $currentConfig->nit;
     }
 }

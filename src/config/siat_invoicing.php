@@ -10,5 +10,5 @@ return [
         'obtencion_codigos' => 'https://pilotosiatservicios.impuestos.gob.bo/v2/FacturacionCodigos?wsdl',
         'compra_venta' => 'https://pilotosiatservicios.impuestos.gob.bo/v2/ServicioFacturacionCompraVenta?wsdl'
     ],
-    'mainSchema' => 'facturaElectronicaCompraVenta'
+    'main_schema' => 'facturaElectronicaCompraVenta'
 ];

@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
 {
-    protected $table = 'siat_config';
+    protected $table = 'siat_configs';
 }
