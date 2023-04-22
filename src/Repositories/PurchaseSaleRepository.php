@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Utils\facturator\Services;
+namespace PedroACF\Invoicing\Repositories;
+use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\PurchaseSaleComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
@@ -33,8 +34,10 @@ class PurchaseSaleRepository
     }
 
     //recepcionFactura
-    public function sendInvoice(){
-        $response = $this->client->recepcionFactura();
+    public function sendInvoice(RecepcionFacturaRequest $req){
+        dump($req->toArray());
+        $response = $this->client->recepcionFactura( $req->toArray() );
+        dump($response);
     }
 
     //recepcionMasivaFactura

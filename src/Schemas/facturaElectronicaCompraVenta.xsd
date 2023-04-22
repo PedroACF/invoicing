@@ -2,7 +2,7 @@
 <!-- XSD ver.23/08/2021 -->
 <xs:schema xmlns:ds="http://www.w3.org/2000/09/xmldsig#" attributeFormDefault="unqualified"
            elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="../SignatureSchema.xsd"/>
+    <xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="SignatureSchema.xsd"/>
     <xs:element name="facturaElectronicaCompraVenta">
         <xs:complexType>
             <xs:sequence>

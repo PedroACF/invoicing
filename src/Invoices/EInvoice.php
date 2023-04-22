@@ -22,9 +22,9 @@ class EInvoice
         foreach($this->details as $det){
             $sum = $sum + $det->subTotal;
         }
-        $this->header->montoTotal = $sum;
-        $this->header->montoTotalSujetoIva = $sum * 1;
-        $this->header->montoTotalMoneda = $sum * $this->header->tipoCambio;
+        $this->header->montoTotal = round($sum, 2);
+        $this->header->montoTotalSujetoIva = round($sum * 1, 2);
+        $this->header->montoTotalMoneda = $sum * round($this->header->tipoCambio, 2);
     }
 
     public function clearDetails(){

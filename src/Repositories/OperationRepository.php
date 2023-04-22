@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utils\facturator\Services;
+namespace PedroACF\Invoicing\Repositories;
 use PedroACF\Invoicing\Responses\Operation\OperationComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 

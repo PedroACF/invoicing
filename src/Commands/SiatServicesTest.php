@@ -10,13 +10,16 @@ use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
 use PedroACF\Invoicing\Models\Invoice;
+use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
+use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Utils\XmlSigner;
 
 use Faker\Factory as Faker;
+use PedroACF\Invoicing\Utils\XmlValidator;
 
 class SiatServicesTest extends Command
 {
@@ -302,6 +305,7 @@ class SiatServicesTest extends Command
         $codeService = new CodeService();
         $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint)", true, 'warning');
         $testLimit = 1;
+        $cuisModel = $codeService->getValidCufdModel();
         for($test = 1; $test<=$testLimit; $test++){
             try{
                 //GENERAR ARCHIVO XML
@@ -310,7 +314,7 @@ class SiatServicesTest extends Command
                 $emissionDate = Carbon::now();
                 $newInvoiceNumber = ConfigService::getAvailableInvoiceNumber();
                 $cufdModel = $codeService->getValidCufdModel();
-
+                $sectorDocumentCode = 1; // TODO: Revisar
                 // - Generar cabecera
                 $invoiceHeader = new HeaderEInvoice();
                 $invoiceHeader->nitEmisor = $config->nit;
@@ -332,32 +336,33 @@ class SiatServicesTest extends Command
                 }
                 $invoiceHeader->codigoCliente = $faker->randomNumber();
                 $invoiceHeader->codigoMetodoPago = 1;
-                $invoiceHeader->montoTotal = 0;
-                $invoiceHeader->montoTotalSujetoIva = 0;
+                $invoiceHeader->montoTotal = 0.00;
+                $invoiceHeader->montoTotalSujetoIva = 0.00;
                 $invoiceHeader->codigoMoneda = 1;
-                $invoiceHeader->tipoCambio = 1.00000;
+                $invoiceHeader->tipoCambio = 1.00;
                 $invoiceHeader->montoTotalMoneda = 0;
                 $invoiceHeader->montoGiftCard = 0;
                 $invoiceHeader->descuentoAdicional = 0.00;
                 $invoiceHeader->codigoExcepcion = 0;//para nit invalidos 0=>registro normal, 1=> se autoriza el registro
                 $invoiceHeader->leyenda = $faker->sentence(10);
                 $invoiceHeader->usuario = $faker->regexify('[A-Z]{5}[0-4]{3}');
-                $invoiceHeader->codigoDocumentoSector = 1;
+                $invoiceHeader->codigoDocumentoSector = $sectorDocumentCode;
                 $invoiceHeader->generateCufCode($cufdModel);
                 $eInvoice = new EInvoice(config("siat_invoicing.main_schema"), $invoiceHeader);
                 for($i=0;$i<$faker->numberBetween(1, 3); $i++){
+                    //TODO check
                     $detail = new DetailEInvoice();
                     $detail->actividadEconomica = $faker->randomNumber();
-                    $detail->codigoProductoSin = $faker->randomNumber();
+                    $detail->codigoProductoSin = $faker->numberBetween(1, 9999999);
                     $detail->codigoProducto = $faker->randomNumber();
                     $detail->descripcion = $faker->sentence(10);
                     $qty = $faker->randomNumber(1, 10);
                     $detail->cantidad = $qty;
-                    $detail->unidadMedida = $faker->randomNumber();
-                    $price = $faker->randomFloat(5, 1, 100);
+                    $detail->unidadMedida = $faker->numberBetween(1, 200);
+                    $price = round($faker->randomFloat(5, 1, 100), 2);
                     $detail->precioUnitario = $price;
                     $detail->montoDescuento = 0.0;
-                    $detail->subTotal = $qty*$price;
+                    $detail->subTotal = round($qty*$price, 2);
                     $detail->numeroImei = 0.0;
                     $eInvoice->addDetail($detail);
                 }
@@ -377,12 +382,21 @@ class SiatServicesTest extends Command
                 $model->user_id = $faker->randomNumber();
                 $model->save();
                 $model->refresh();
+                $content = stream_get_contents($model->content);
+                // VALIDAR CON XSD
+                $xmlValidator = new XmlValidator($content);
+                $xmlValidator->validate();
+//                dd(libxml_get_errors());
+                // COMPRIMIR ZIP
+                $compressed = gzencode($content);
 
-                //firmar Xml
-                //validar con xsd
-                //comprimir zip
-                //obtener hash
-                //envio por endpoint
+                // OBTENER HASH
+                $hash = hash('sha256', $compressed);
+
+                //SEND PACKAGE
+                $request = new RecepcionFacturaRequest($sectorDocumentCode, 1, $cufdModel->cufd, $cuisModel->cuis, 1, $compressed, $hash);
+                $service = new InvoicingService();
+                $service->sendInvoice($request);
                 $passed = true;
             }catch (\Exception $e){
                 dump($e);
