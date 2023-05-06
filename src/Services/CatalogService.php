@@ -2,6 +2,7 @@
 
 namespace PedroACF\Invoicing\Services;
 
+use Carbon\Carbon;
 use PedroACF\Invoicing\Models\Activity;
 use PedroACF\Invoicing\Models\ActivityDocSector;
 use PedroACF\Invoicing\Models\CancelReason;
@@ -37,6 +38,14 @@ class CatalogService
         $this->cuis = $this->codeService->getCuisCode();
     }
 
+    public function syncFechaHora(){
+        $syncReq = new SincronizacionRequest($this->cuis);
+        $remote = $this->repo->getFechaHora($syncReq);
+        $now = new Carbon();
+        $diff = $now->diffInMilliseconds($remote->date, false);
+        ConfigService::setTimeDiff($diff);
+    }
+
     public function syncActividades(){
         $syncReq = new SincronizacionRequest($this->cuis);
         $remote = $this->repo->getActividades($syncReq);
@@ -60,10 +69,6 @@ class CatalogService
             }
         }
         Activity::whereNotIn('codigo_caeb', $activity_ids)->update(['activo'=>false]);
-    }
-
-    public function syncFechaHora(){
-        $syncReq = new SincronizacionRequest($this->cuis);
     }
 
     public function syncActividadesDocumentosSector(){

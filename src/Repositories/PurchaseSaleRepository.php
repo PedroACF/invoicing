@@ -1,6 +1,7 @@
 <?php
 
 namespace PedroACF\Invoicing\Repositories;
+use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\PurchaseSaleComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
@@ -24,8 +25,9 @@ class PurchaseSaleRepository
     }
 
     //anulacionFactura
-    public function cancelInvoice(){
-        $response = $this->client->anulacionFactura();
+    public function cancelInvoice(AnulacionFacturaRequest $req){
+        $response = $this->client->anulacionFactura($req->toArray());
+        return $response;
     }
 
     //recepcionAnexos
@@ -35,9 +37,8 @@ class PurchaseSaleRepository
 
     //recepcionFactura
     public function sendInvoice(RecepcionFacturaRequest $req){
-        dump($req->toArray());
         $response = $this->client->recepcionFactura( $req->toArray() );
-        dump($response);
+        return $response;
     }
 
     //recepcionMasivaFactura

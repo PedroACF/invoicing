@@ -22,6 +22,7 @@ class CreateConfigsTable extends Migration
             $table->integer('office')->default(0);//sucursales
             $table->string('office_address');
             $table->integer('sale_point');
+            $table->integer('server_time_diff')->default(0);
             $table->bigInteger('last_invoice_number')->default(0);
             $table->timestamps();
         });

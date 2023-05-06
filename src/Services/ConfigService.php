@@ -2,6 +2,7 @@
 
 namespace PedroACF\Invoicing\Services;
 
+use Carbon\Carbon;
 use PedroACF\Invoicing\Models\Config;
 use PedroACF\Invoicing\Models\DelegateToken;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
@@ -60,5 +61,21 @@ class ConfigService extends BaseService
             return $availableNumber;
         }
         return -1;
+    }
+
+    public static function getTime(){
+        $config = self::getConfigs();
+        $difference = $config? $config->server_time_diff: 0;
+        $now = Carbon::now();
+        $now->addMilliseconds($difference);
+        return $now;
+    }
+
+    public static function setTimeDiff($difference){
+        $config = self::getConfigs();
+        if($config){
+            $config->server_time_diff = $difference;
+            $config->save();
+        }
     }
 }

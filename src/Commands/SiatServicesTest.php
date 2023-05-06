@@ -9,7 +9,10 @@ use League\CommonMark\Inline\Element\Code;
 use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
+use PedroACF\Invoicing\Models\CancelReason;
+use PedroACF\Invoicing\Models\IdentityDocType;
 use PedroACF\Invoicing\Models\Invoice;
+use PedroACF\Invoicing\Models\Product;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
@@ -77,10 +80,10 @@ class SiatServicesTest extends Command
 //            $this->etapaI($salePoint);
 //            $this->etapaII($salePoint);
 //            $this->etapaIII($salePoint);
-            $this->etapaIV($salePoint);
+//            $this->etapaIV($salePoint);
 //            $this->etapaV();
 //            $this->etapaVI();
-//            $this->etapaVII();
+            $this->etapaVII($salePoint);
 //            $this->etapaVIII();
             $salePoint++;
         }
@@ -287,9 +290,26 @@ class SiatServicesTest extends Command
         $this->writeMessage("Etapa VIII: Firma digital (punto de venta: $this->salePoint)", true, 'warning');
     }
 
-    private function etapaVII(){
+    private function etapaVII($salePoint){
         $testLimit = 125;
-        $this->writeMessage("Etapa VII: Anulacion (punto de venta: $this->salePoint)", true, 'warning');
+        $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint)", true, 'warning');
+        // TODO: Tomar toda la lista de la etapa iv (mejorar esto)
+        $forNullifyList = Invoice::all();
+        $test = 1;
+        foreach($forNullifyList as $invoice){
+            try{
+                $service = new InvoicingService();
+                $cancelReason = CancelReason::inRandomOrder()->first();
+                $service->cancelInvoice($invoice, $cancelReason);
+                $passed = true;
+            }catch (\Exception $e){
+                dump($e);
+                $passed = false;
+            }
+            $number = str_pad($test++, 3, "0", STR_PAD_LEFT);
+            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
+            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+        }
     }
     private function etapaVI(){
         $testLimit = 10;
@@ -302,16 +322,16 @@ class SiatServicesTest extends Command
 
     private function etapaIV($salePoint){
         $config = ConfigService::getConfigs();
+        $emissionDate = ConfigService::getTime();
         $codeService = new CodeService();
         $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint)", true, 'warning');
-        $testLimit = 1;
-        $cuisModel = $codeService->getValidCufdModel();
+        $testLimit = 125;
+        $cuisModel = $codeService->getValidCuisModel();
         for($test = 1; $test<=$testLimit; $test++){
             try{
                 //GENERAR ARCHIVO XML
                 // - inicializar valores auxiliares
                 $faker = Faker::create('es_PE');
-                $emissionDate = Carbon::now();
                 $newInvoiceNumber = ConfigService::getAvailableInvoiceNumber();
                 $cufdModel = $codeService->getValidCufdModel();
                 $sectorDocumentCode = 1; // TODO: Revisar
@@ -328,11 +348,15 @@ class SiatServicesTest extends Command
                 $invoiceHeader->direccion = $config->office_address;
                 $invoiceHeader->fechaEmision = $emissionDate->format("Y-m-d\TH:i:s.v");
                 $invoiceHeader->nombreRazonSocial = $faker->name;
-                $invoiceHeader->codigoTipoDocumentoIdentidad = $faker->numberBetween(1, 5);
+                $typeDocument = IdentityDocType::where('descripcion', 'CI - CEDULA DE IDENTIDAD')->first();
+                $invoiceHeader->codigoTipoDocumentoIdentidad = $typeDocument? $typeDocument->codigo_clasificador: 0;
+                $document = [];
                 $invoiceHeader->numeroDocumento = $faker->randomNumber(8, true);
                 $hasComplement = rand(0,1) == 1;
+                $document[] = $invoiceHeader->numeroDocumento;
                 if($hasComplement){
                     $invoiceHeader->complemento = ($faker->randomLetter()).($faker->randomDigit());
+                    $document[] = $invoiceHeader->complemento;
                 }
                 $invoiceHeader->codigoCliente = $faker->randomNumber();
                 $invoiceHeader->codigoMetodoPago = 1;
@@ -352,8 +376,9 @@ class SiatServicesTest extends Command
                 for($i=0;$i<$faker->numberBetween(1, 3); $i++){
                     //TODO check
                     $detail = new DetailEInvoice();
-                    $detail->actividadEconomica = $faker->randomNumber();
-                    $detail->codigoProductoSin = $faker->numberBetween(1, 9999999);
+                    $product = Product::inRandomOrder()->first();
+                    $detail->actividadEconomica = $product->codigo_actividad;
+                    $detail->codigoProductoSin = $product->codigo_producto;
                     $detail->codigoProducto = $faker->randomNumber();
                     $detail->descripcion = $faker->sentence(10);
                     $qty = $faker->randomNumber(1, 10);
@@ -374,7 +399,7 @@ class SiatServicesTest extends Command
                 $model = new Invoice();
                 $model->number = $newInvoiceNumber;
                 $model->cuf = $invoiceHeader->cuf;
-                $model->document = implode("-", [$invoiceHeader->numeroDocumento, $invoiceHeader->complemento]);
+                $model->document = implode("-", $document);
                 $model->client_name = $invoiceHeader->razonSocialEmisor;
                 $model->emission_date = $emissionDate;
                 $model->amount = $eInvoice->header->montoTotal;
@@ -389,6 +414,7 @@ class SiatServicesTest extends Command
 //                dd(libxml_get_errors());
                 // COMPRIMIR ZIP
                 $compressed = gzencode($content);
+                //$b64 = base64_encode($compressed);
 
                 // OBTENER HASH
                 $hash = hash('sha256', $compressed);
@@ -447,7 +473,14 @@ class SiatServicesTest extends Command
         //TODO: Ver como hacer
         $this->writeMessage("* 02 FECHA Y HORA ACTUAL *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
-            $passed = (bool)rand(0,1);
+
+            try{
+                $catalogService->syncFechaHora();
+                $passed = true;
+            }catch (\Exception $e){
+                dump($e);
+                $passed = false;
+            }
             $number = str_pad($test, 3, "0", STR_PAD_LEFT);
             $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
             $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');

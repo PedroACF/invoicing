@@ -5,7 +5,7 @@ use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
-class RecepcionFacturaRequest extends BaseRequest
+class AnulacionFacturaRequest extends BaseRequest
 {
     public $codigoAmbiente = 0;
     public $codigoDocumentoSector = 0;
@@ -18,15 +18,14 @@ class RecepcionFacturaRequest extends BaseRequest
     public $cuis = "";
     public $nit = "";
     public $tipoFacturaDocumento = 0;
-    public $archivo = '';
-    public $fechaEnvio = null;
-    public $hashArchivo = '';
+    public $codigoMotivo = '';
+    public $cuf = 0;
 
 
-    public function __construct($sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $file, $hash)
+    public function __construct($sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $reasonCode, $cuf)
     {
         $currentConfig = ConfigService::getConfigs();
-        $this->requestName = "SolicitudServicioRecepcionFactura";
+        $this->requestName = "SolicitudServicioAnulacionFactura";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
         $this->codigoEmision = $emissionCode; //TODO: Verificar
@@ -39,8 +38,7 @@ class RecepcionFacturaRequest extends BaseRequest
         $this->nit = $currentConfig->nit;
 
         $this->tipoFacturaDocumento = $invoiceType;
-        $this->archivo = $file;
-        $this->fechaEnvio = Carbon::now()->format("Y-m-d\TH:i:s.v");
-        $this->hashArchivo = $hash;
+        $this->codigoMotivo = $reasonCode;
+        $this->cuf = $cuf;
     }
 }

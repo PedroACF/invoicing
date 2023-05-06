@@ -1,8 +1,10 @@
 <?php
 namespace PedroACF\Invoicing\Repositories;
 
+use Carbon\Carbon;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
 use PedroACF\Invoicing\Responses\DataSync\DataSyncComunicacionResponse;
+use PedroACF\Invoicing\Responses\DataSync\FechaHoraResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaActividadesDocumentoSectorResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaActividadesResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaParametricasLeyendasResponse;
@@ -30,9 +32,11 @@ class DataSyncRepository
         ]);
     }
 
-
-
-//sincronizarFechaHora
+    //sincronizarFechaHora
+    public function getFechaHora(SincronizacionRequest $req): FechaHoraResponse{
+        $response = $this->client->sincronizarFechaHora($req->toArray());
+        return FechaHoraResponse::build($response);
+    }
 
     //sincronizarActividades
     public function getActividades(SincronizacionRequest $req): ListaActividadesResponse{
