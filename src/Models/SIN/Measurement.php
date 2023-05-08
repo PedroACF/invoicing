@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CurrencyType extends Model
+class Measurement extends Model
 {
-    protected $table = 'siat_currency_types';
+    protected $table = 'sin_measurement';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

@@ -2,9 +2,9 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use PedroACF\Invoicing\Models\Invoice;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use PedroACF\Invoicing\Models\SYS\Invoice;
 
 class CreateInvoicesTable extends Migration
 {
@@ -17,7 +17,7 @@ class CreateInvoicesTable extends Migration
     {
         DB::statement('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
 
-        Schema::create('siat_invoices', function (Blueprint $table) {
+        Schema::create('sys_invoices', function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('uuid_generate_v4()'));
             $table->bigInteger('number');
             $table->string("cuf");
@@ -28,6 +28,10 @@ class CreateInvoicesTable extends Migration
             $table->binary('content');
             $table->enum('state', Invoice::getEnumTypes())->default(Invoice::ENUM_PENDANT);//VALIDA, RECHAZADA, PENDIENTE (DE ENVIO)
             $table->unsignedInteger('user_id')->nullable();
+
+            $table->unsignedBigInteger('significant_event_id')->nullable();
+            $table->foreign('significant_event_id')->references('id')->on('sys_significant_events');
+
             $table->timestamps();
         });
 
@@ -41,6 +45,6 @@ class CreateInvoicesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('invoices');
+        Schema::dropIfExists('sys_invoices');
     }
 }

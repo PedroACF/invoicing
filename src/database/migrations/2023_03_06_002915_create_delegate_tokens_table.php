@@ -14,7 +14,7 @@ class CreateDelegateTokensTable extends Migration
     //4007190
     public function up()
     {
-        Schema::create('siat_delegate_tokens', function (Blueprint $table) {
+        Schema::create('sys_delegate_tokens', function (Blueprint $table) {
             $table->id();
             $table->text('token');
             $table->dateTime('fecha_expiracion');
@@ -30,6 +30,6 @@ class CreateDelegateTokensTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_delegate_tokens');
+        Schema::dropIfExists('sys_delegate_tokens');
     }
 }

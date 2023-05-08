@@ -3,9 +3,8 @@
 namespace PedroACF\Invoicing\Services;
 
 use Carbon\Carbon;
-use PedroACF\Invoicing\Models\Config;
-use PedroACF\Invoicing\Models\DelegateToken;
-use PedroACF\Invoicing\Repositories\DataSyncRepository;
+use PedroACF\Invoicing\Models\SYS\Config;
+use PedroACF\Invoicing\Models\SYS\DelegateToken;
 
 class ConfigService extends BaseService
 {
@@ -24,7 +23,7 @@ class ConfigService extends BaseService
         ])->orderBy('created_at', 'desc')->first();
     }
 
-    public static function setConfigs(string $nit, string $business_name, string $municipality, string $phone, int $office, string $office_address, int $sale_point){
+    public static function setConfigs(string $nit, string $business_name, string $municipality, string $phone, int $office, string $office_address){
         $config = Config::first();
         if(!$config){
             $config = new Config();
@@ -35,7 +34,6 @@ class ConfigService extends BaseService
         $config->phone = $phone;
         $config->office = $office;
         $config->office_address = $office_address;
-        $config->sale_point = $sale_point;
         $config->save();
     }
 

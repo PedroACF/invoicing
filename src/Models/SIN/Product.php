@@ -1,10 +1,10 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    protected $table = 'siat_products';
+    protected $table = 'sin_products';
 }

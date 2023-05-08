@@ -13,7 +13,7 @@ class CreateEmissionTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_emission_types', function (Blueprint $table) {
+        Schema::create('sin_emission_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateEmissionTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_emission_types');
+        Schema::dropIfExists('sin_emission_types');
     }
 }

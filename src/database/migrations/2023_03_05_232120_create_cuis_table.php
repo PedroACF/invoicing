@@ -13,7 +13,7 @@ class CreateCuisTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_cuis', function (Blueprint $table) {
+        Schema::create('sin_cuis', function (Blueprint $table) {
             $table->id();
             $table->text('cuis');
             $table->dateTime('expired_date');
@@ -29,6 +29,6 @@ class CreateCuisTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_cuis');
+        Schema::dropIfExists('sin_cuis');
     }
 }

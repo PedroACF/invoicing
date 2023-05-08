@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Repositories;
 use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
+use PedroACF\Invoicing\Requests\PurchaseSale\VerificacionEstadoFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\PurchaseSaleComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
@@ -62,8 +63,9 @@ class PurchaseSaleRepository
     }
 
     //verificacionEstadoFactura
-    public function checkInvoiceStatus(){
-        $response = $this->client->verificacionEstadoFactura();
+    public function checkInvoiceStatus(VerificacionEstadoFacturaRequest $req){
+        $response = $this->client->verificacionEstadoFactura($req->toArray());
+        return $response;
     }
 
     public function verificarComunicacion(): PurchaseSaleComunicacionResponse{

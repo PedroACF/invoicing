@@ -13,7 +13,7 @@ class CreateCancelReasonsTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_cancel_reasons', function (Blueprint $table) {
+        Schema::create('sin_cancel_reasons', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateCancelReasonsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_cancel_reasons');
+        Schema::dropIfExists('sin_cancel_reasons');
     }
 }

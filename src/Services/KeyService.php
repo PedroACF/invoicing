@@ -2,7 +2,7 @@
 
 namespace PedroACF\Invoicing\Services;
 
-use PedroACF\Invoicing\Models\SslKey;
+use PedroACF\Invoicing\Models\SYS\SslKey;
 
 class KeyService
 {

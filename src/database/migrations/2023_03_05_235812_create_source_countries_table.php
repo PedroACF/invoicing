@@ -13,7 +13,7 @@ class CreateSourceCountriesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_source_countries', function (Blueprint $table) {
+        Schema::create('sin_source_countries', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateSourceCountriesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_source_countries');
+        Schema::dropIfExists('sin_source_countries');
     }
 }

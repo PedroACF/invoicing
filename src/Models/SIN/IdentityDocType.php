@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class EmissionType extends Model
+class IdentityDocType extends Model
 {
-    protected $table = 'siat_emission_types';
+    protected $table = 'sin_identity_doc_types';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

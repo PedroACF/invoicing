@@ -2,17 +2,16 @@
 
 namespace PedroACF\Invoicing\Commands;
 
-use Carbon\Carbon;
+use Faker\Factory as Faker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
-use League\CommonMark\Inline\Element\Code;
 use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
-use PedroACF\Invoicing\Models\CancelReason;
-use PedroACF\Invoicing\Models\IdentityDocType;
-use PedroACF\Invoicing\Models\Invoice;
-use PedroACF\Invoicing\Models\Product;
+use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SIN\IdentityDocType;
+use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
@@ -20,8 +19,6 @@ use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Utils\XmlSigner;
-
-use Faker\Factory as Faker;
 use PedroACF\Invoicing\Utils\XmlValidator;
 
 class SiatServicesTest extends Command
@@ -186,7 +183,7 @@ class SiatServicesTest extends Command
             $showPrompt = false;
         }
 
-        ConfigService::setConfigs($nit, $businessName, $municipality, $phone, $office, $office_address, 0);
+        ConfigService::setConfigs($nit, $businessName, $municipality, $phone, $office, $office_address);
     }
 
     private function readDelegateToken(){

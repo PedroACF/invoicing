@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateActivityDocSectorsTable extends Migration
+class CreateSalePointsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,13 @@ class CreateActivityDocSectorsTable extends Migration
      */
     public function up()
     {
-        Schema::create('sin_activity_doc_sectors', function (Blueprint $table) {
+        Schema::create('sys_sale_points', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo_actividad');
-            $table->string('codigo_documento_sector');
-            $table->string('tipo_documento_sector');
-            $table->boolean('activo')->default(false);
+            $table->integer('sin_code')->nullable();
+            $table->integer('sale_point_type');
+            $table->string('name');
+            $table->string('description');
+            $table->boolean('is_closed')->default(false);
             $table->timestamps();
         });
     }
@@ -30,6 +31,6 @@ class CreateActivityDocSectorsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sin_activity_doc_sectors');
+        Schema::dropIfExists('sys_sale_points');
     }
 }

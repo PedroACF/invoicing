@@ -2,11 +2,12 @@
 
 namespace PedroACF\Invoicing\Services;
 
-use PedroACF\Invoicing\Models\CancelReason;
-use PedroACF\Invoicing\Models\Invoice;
+use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
 use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
+use PedroACF\Invoicing\Requests\PurchaseSale\VerificacionEstadoFacturaRequest;
 
 class InvoicingService
 {
@@ -36,5 +37,11 @@ class InvoicingService
         );
         $result = $this->repo->cancelInvoice($request);
         dump($result);
+    }
+
+    public function checkInvoiceStatus(Invoice $invoice){
+        $request = new VerificacionEstadoFacturaRequest(1, 1, 1, $invoice->cuf);
+        $result = $this->repo->checkInvoiceStatus($request);
+        dd($result);
     }
 }

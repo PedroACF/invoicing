@@ -13,9 +13,12 @@ class CreateConfigsTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_configs', function (Blueprint $table) {
+        Schema::create('sys_configs', function (Blueprint $table) {
             $table->id();
-            $table->string('nit');
+            $table->string('key');//NIT, BUSINESS_NAME, PHONE, OFFICE, OFFICE_ADDRESS, server_time_diff, LAST_INVOICE_NUMBER
+            $table->string('value')->nullable();
+            $table->string('date_type')->default('string');
+            /*$table->string('nit');
             $table->string('business_name');
             $table->string('municipality');
             $table->string('phone');
@@ -23,7 +26,7 @@ class CreateConfigsTable extends Migration
             $table->string('office_address');
             $table->integer('sale_point');
             $table->integer('server_time_diff')->default(0);
-            $table->bigInteger('last_invoice_number')->default(0);
+            $table->bigInteger('last_invoice_number')->default(0);*/
             $table->timestamps();
         });
     }
@@ -35,6 +38,6 @@ class CreateConfigsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_configs');
+        Schema::dropIfExists('sys_configs');
     }
 }

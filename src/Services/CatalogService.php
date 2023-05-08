@@ -3,26 +3,25 @@
 namespace PedroACF\Invoicing\Services;
 
 use Carbon\Carbon;
-use PedroACF\Invoicing\Models\Activity;
-use PedroACF\Invoicing\Models\ActivityDocSector;
-use PedroACF\Invoicing\Models\CancelReason;
-use PedroACF\Invoicing\Models\CurrencyType;
-use PedroACF\Invoicing\Models\EmissionType;
-use PedroACF\Invoicing\Models\IdentityDocType;
-use PedroACF\Invoicing\Models\InvoiceType;
-use PedroACF\Invoicing\Models\Legend;
-use PedroACF\Invoicing\Models\Measurement;
-use PedroACF\Invoicing\Models\Message;
-use PedroACF\Invoicing\Models\PaymentType;
-use PedroACF\Invoicing\Models\Product;
-use PedroACF\Invoicing\Models\RoomType;
-use PedroACF\Invoicing\Models\SalePointType;
-use PedroACF\Invoicing\Models\SectorDocType;
-use PedroACF\Invoicing\Models\SignificantEvent;
-use PedroACF\Invoicing\Models\SourceCountry;
+use PedroACF\Invoicing\Models\SIN\Activity;
+use PedroACF\Invoicing\Models\SIN\ActivityDocSector;
+use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SIN\CurrencyType;
+use PedroACF\Invoicing\Models\SIN\EmissionType;
+use PedroACF\Invoicing\Models\SIN\IdentityDocType;
+use PedroACF\Invoicing\Models\SIN\InvoiceType;
+use PedroACF\Invoicing\Models\SIN\Legend;
+use PedroACF\Invoicing\Models\SIN\Measurement;
+use PedroACF\Invoicing\Models\SIN\Message;
+use PedroACF\Invoicing\Models\SIN\PaymentType;
+use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SIN\RoomType;
+use PedroACF\Invoicing\Models\SIN\SalePointType;
+use PedroACF\Invoicing\Models\SIN\SectorDocType;
+use PedroACF\Invoicing\Models\SIN\SignificantEventType;
+use PedroACF\Invoicing\Models\SIN\SourceCountry;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
-use PedroACF\Invoicing\Responses\Mensaje;
 
 class CatalogService
 {
@@ -178,14 +177,14 @@ class CatalogService
         $remote = $this->repo->getParamEventosSignificativos($syncReq);
         $item_ids = [];
         foreach($remote->items as $item){
-            $old = SignificantEvent::where('codigo_clasificador', $item->codigoClasificador)->first();
+            $old = SignificantEventType::where('codigo_clasificador', $item->codigoClasificador)->first();
             if($old){
                 $old->activo = true;
                 $old->descripcion = $item->descripcion;
                 $old->save();
                 $item_ids[] = $old->codigo_clasificador;
             }else{
-                $new = new SignificantEvent();
+                $new = new SignificantEventType();
                 $new->codigo_clasificador = $item->codigoClasificador;
                 $new->descripcion = $item->descripcion;
                 $new->activo = true;
@@ -193,7 +192,7 @@ class CatalogService
                 $item_ids[] = $new->codigo_clasificador;
             }
         }
-        SignificantEvent::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
+        SignificantEventType::whereNotIn('codigo_clasificador', $item_ids)->update(['activo'=>false]);
     }
 
     public function syncPaises(){

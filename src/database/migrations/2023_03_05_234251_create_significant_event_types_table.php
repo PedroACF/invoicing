@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateDatetimesTable extends Migration
+class CreateSignificantEventTypesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,10 @@ class CreateDatetimesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_datetimes', function (Blueprint $table) {
-            $table->id();
-            $table->dateTime('fecha_hora_servidor');
+        Schema::create('sin_significant_event_types', function (Blueprint $table) {
+            $table->string('codigo_clasificador')->primary();
+            $table->text('descripcion');
+            $table->boolean('activo')->default(false);
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ class CreateDatetimesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_datetimes');
+        Schema::dropIfExists('sin_significant_event_types');
     }
 }

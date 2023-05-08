@@ -1,10 +1,10 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SYS;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
 {
-    protected $table = 'siat_configs';
+    protected $table = 'sys_configs';
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PaymentType extends Model
+class SignificantEventType extends Model
 {
-    protected $table = 'siat_payment_types';
+    protected $table = 'sin_significant_event_types';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

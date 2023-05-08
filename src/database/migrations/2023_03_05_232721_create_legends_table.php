@@ -13,7 +13,7 @@ class CreateLegendsTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_legends', function (Blueprint $table) {
+        Schema::create('sin_legends', function (Blueprint $table) {
             $table->id();
             $table->string('codigo_actividad');
             $table->text('descripcion_leyenda');
@@ -29,6 +29,6 @@ class CreateLegendsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_legends');
+        Schema::dropIfExists('sin_legends');
     }
 }

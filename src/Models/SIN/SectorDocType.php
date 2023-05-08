@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Message extends Model
+class SectorDocType extends Model
 {
-    protected $table = 'siat_messages';
+    protected $table = 'sin_sector_doc_types';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

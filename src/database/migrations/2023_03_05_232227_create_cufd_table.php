@@ -13,7 +13,7 @@ class CreateCufdTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_cufd', function (Blueprint $table) {
+        Schema::create('sin_cufd', function (Blueprint $table) {
             $table->id();
             $table->text('cufd');
             $table->string('codigo_control');
@@ -31,6 +31,6 @@ class CreateCufdTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_cufd');
+        Schema::dropIfExists('sin_cufd');
     }
 }

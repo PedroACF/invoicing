@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SalePointType extends Model
+class CancelReason extends Model
 {
-    protected $table = 'siat_sale_point_types';
+    protected $table = 'sin_cancel_reasons';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

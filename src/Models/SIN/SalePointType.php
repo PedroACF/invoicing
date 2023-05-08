@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SourceCountry extends Model
+class SalePointType extends Model
 {
-    protected $table = 'siat_source_countries';
+    protected $table = 'sin_sale_point_types';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

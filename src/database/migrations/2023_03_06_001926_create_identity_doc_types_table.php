@@ -13,7 +13,7 @@ class CreateIdentityDocTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_identity_doc_types', function (Blueprint $table) {
+        Schema::create('sin_identity_doc_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateIdentityDocTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_identity_doc_types');
+        Schema::dropIfExists('sin_identity_doc_types');
     }
 }

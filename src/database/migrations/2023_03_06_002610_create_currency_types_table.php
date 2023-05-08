@@ -13,7 +13,7 @@ class CreateCurrencyTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_currency_types', function (Blueprint $table) {
+        Schema::create('sin_currency_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateCurrencyTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_currency_types');
+        Schema::dropIfExists('sin_currency_types');
     }
 }

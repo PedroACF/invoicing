@@ -2,13 +2,15 @@
 
 namespace PedroACF\Invoicing\Services;
 
-use PedroACF\Invoicing\Models\Cufd;
-use PedroACF\Invoicing\Models\Cuis;
+use Carbon\Carbon;
+use PedroACF\Invoicing\Models\SIN\Cufd;
+use PedroACF\Invoicing\Models\SIN\Cuis;
 use PedroACF\Invoicing\Repositories\CodeRepository;
 use PedroACF\Invoicing\Requests\Code\CufdRequest;
 use PedroACF\Invoicing\Requests\Code\CuisRequest;
+use PedroACF\Invoicing\Requests\Code\VerificarNitRequest;
 use PedroACF\Invoicing\Responses\Code\CodeComunicacionResponse;
-use Carbon\Carbon;
+
 class CodeService extends BaseService
 {
     private $repo;
@@ -53,6 +55,14 @@ class CodeService extends BaseService
         $model->activo = true;
         $model->save();
         return $model->cufd;
+    }
+
+    public function checkNit($nitToVerify){
+        $cuis = $this->getCuisCode();
+        $request = new VerificarNitRequest($cuis, $nitToVerify);
+        $response = $this->repo->verificarNit($request);
+        //TODO Terminar
+        dd($response);
     }
 
     public function getValidCuisModel(): ?Cuis{

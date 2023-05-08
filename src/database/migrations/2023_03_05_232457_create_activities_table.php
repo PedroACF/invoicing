@@ -13,7 +13,7 @@ class CreateActivitiesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_activities', function (Blueprint $table) {
+        Schema::create('sin_activities', function (Blueprint $table) {
             $table->string('codigo_caeb')->primary();
             $table->text('descripcion');
             $table->string('tipo_actividad');
@@ -29,6 +29,6 @@ class CreateActivitiesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_activities');
+        Schema::dropIfExists('sin_activities');
     }
 }

@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use PedroACF\Invoicing\Models\SslKey;
+use PedroACF\Invoicing\Models\SYS\SslKey;
 
 class CreateSslKeysTable extends Migration
 {
@@ -14,7 +14,7 @@ class CreateSslKeysTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_ssl_keys', function (Blueprint $table) {
+        Schema::create('sys_ssl_keys', function (Blueprint $table) {
             $table->id();
             $table->binary('content');
             $table->enum('type', SslKey::getEnumTypes());
@@ -30,6 +30,6 @@ class CreateSslKeysTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_ssl_keys');
+        Schema::dropIfExists('sys_ssl_keys');
     }
 }

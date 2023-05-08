@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Repositories;
 
 use PedroACF\Invoicing\Requests\Code\CufdRequest;
+use PedroACF\Invoicing\Requests\Code\VerificarNitRequest;
 use PedroACF\Invoicing\Responses\Code\CodeComunicacionResponse;
 use PedroACF\Invoicing\Responses\Code\CufdResponse;
 use PedroACF\Invoicing\Requests\Code\CuisRequest;
@@ -41,11 +42,11 @@ class CodeRepository
 
     /*public function notificaCertificadoRevocado(){
         return $this->client->call('notificaCertificadoRevocado');
-    }
-
-    public function verificarNit(){
-        return $this->client->call('verificarNit');
     }*/
+
+    public function verificarNit(VerificarNitRequest $req){
+        return $this->client->verificarNit($req->toArray());
+    }
 
     public function verificarComunicacion(): CodeComunicacionResponse{
         $response = $this->client->verificarComunicacion();

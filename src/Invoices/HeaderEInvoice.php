@@ -2,9 +2,7 @@
 namespace PedroACF\Invoicing\Invoices;
 
 use Brick\Math\BigInteger;
-use Carbon\Carbon;
-use DOMDocument;
-use PedroACF\Invoicing\Models\Cufd;
+use PedroACF\Invoicing\Models\SIN\Cufd;
 use PedroACF\Invoicing\Services\ConfigService;
 
 class HeaderEInvoice extends BaseHeaderInvoice

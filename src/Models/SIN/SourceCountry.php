@@ -1,12 +1,12 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SignificantEvent extends Model
+class SourceCountry extends Model
 {
-    protected $table = 'siat_significant_events';
+    protected $table = 'sin_source_countries';
     protected $primaryKey = 'codigo_clasificador';
     public $incrementing = false;
 }

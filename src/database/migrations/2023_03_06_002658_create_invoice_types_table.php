@@ -13,7 +13,7 @@ class CreateInvoiceTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_invoice_types', function (Blueprint $table) {
+        Schema::create('sin_invoice_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreateInvoiceTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_invoice_types');
+        Schema::dropIfExists('sin_invoice_types');
     }
 }

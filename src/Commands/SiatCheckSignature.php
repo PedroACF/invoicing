@@ -3,18 +3,16 @@
 namespace PedroACF\Invoicing\Commands;
 
 use Carbon\Carbon;
+use Faker\Factory as Faker;
 use GuzzleHttp\Client;
 use Illuminate\Console\Command;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
-use PedroACF\Invoicing\Models\Invoice;
+use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Utils\XmlSigner;
-
-use Faker\Factory as Faker;
 
 class SiatCheckSignature extends Command
 {

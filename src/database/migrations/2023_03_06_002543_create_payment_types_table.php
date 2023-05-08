@@ -13,7 +13,7 @@ class CreatePaymentTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('siat_payment_types', function (Blueprint $table) {
+        Schema::create('sin_payment_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
             $table->boolean('activo')->default(false);
@@ -28,6 +28,6 @@ class CreatePaymentTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('siat_payment_types');
+        Schema::dropIfExists('sin_payment_types');
     }
 }

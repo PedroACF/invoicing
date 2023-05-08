@@ -1,10 +1,10 @@
 <?php
 
-namespace PedroACF\Invoicing\Models;
+namespace PedroACF\Invoicing\Models\SIN;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Legend extends Model
 {
-    protected $table = 'siat_legends';
+    protected $table = 'sin_legends';
 }
