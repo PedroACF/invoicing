@@ -17,16 +17,7 @@ class CreateConfigsTable extends Migration
             $table->id();
             $table->string('key');//NIT, BUSINESS_NAME, PHONE, OFFICE, OFFICE_ADDRESS, server_time_diff, LAST_INVOICE_NUMBER
             $table->string('value')->nullable();
-            $table->string('date_type')->default('string');
-            /*$table->string('nit');
-            $table->string('business_name');
-            $table->string('municipality');
-            $table->string('phone');
-            $table->integer('office')->default(0);//sucursales
-            $table->string('office_address');
-            $table->integer('sale_point');
-            $table->integer('server_time_diff')->default(0);
-            $table->bigInteger('last_invoice_number')->default(0);*/
+            $table->string('data_type')->default('string');
             $table->timestamps();
         });
     }
