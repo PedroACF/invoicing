@@ -11,6 +11,7 @@ use PedroACF\Invoicing\Invoices\HeaderEInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
 use PedroACF\Invoicing\Models\SIN\IdentityDocType;
 use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
@@ -183,7 +184,13 @@ class SiatServicesTest extends Command
             $showPrompt = false;
         }
 
-        ConfigService::setConfigs($nit, $businessName, $municipality, $phone, $office, $office_address);
+        Config::setNitConfig($nit);
+        Config::setBusinessNameConfig($businessName);
+        Config::setBusinessPhoneConfig($phone);
+        Config::setOfficeCodeConfig($office);
+        Config::setOfficeAddressConfig($office_address);
+        Config::setMunicipalityConfig($municipality);
+        //server_time_diff, LAST_INVOICE_NUMBER
     }
 
     private function readDelegateToken(){
@@ -334,15 +341,15 @@ class SiatServicesTest extends Command
                 $sectorDocumentCode = 1; // TODO: Revisar
                 // - Generar cabecera
                 $invoiceHeader = new HeaderEInvoice();
-                $invoiceHeader->nitEmisor = $config->nit;
-                $invoiceHeader->razonSocialEmisor = $config->business_name;
-                $invoiceHeader->municipio = $config->municipality;
-                $invoiceHeader->telefono = $config->phone;
+                $invoiceHeader->nitEmisor = Config::getNitConfig()->value;
+                $invoiceHeader->razonSocialEmisor = Config::getBusinessNameConfig()->value;
+                $invoiceHeader->municipio = Config::getMunicipalityConfig()->value;
+                $invoiceHeader->telefono = Config::getOfficePhoneConfig()->value;
                 $invoiceHeader->numeroFactura = $newInvoiceNumber;
                 //$invoiceHeader->cuf = 'ASDQW12';
                 $invoiceHeader->cufd = $cufdModel->cufd;
-                $invoiceHeader->codigoSucursal = $config->office;
-                $invoiceHeader->direccion = $config->office_address;
+                $invoiceHeader->codigoSucursal = Config::getOfficeCodeConfig()->value;
+                $invoiceHeader->direccion = Config::getOfficeAddressConfig()->value;
                 $invoiceHeader->fechaEmision = $emissionDate->format("Y-m-d\TH:i:s.v");
                 $invoiceHeader->nombreRazonSocial = $faker->name;
                 $typeDocument = IdentityDocType::where('descripcion', 'CI - CEDULA DE IDENTIDAD')->first();
