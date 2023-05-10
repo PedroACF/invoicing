@@ -1,5 +1,6 @@
 <?php
 namespace PedroACF\Invoicing\Requests\Operation;
+use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
@@ -20,13 +21,12 @@ class EventoSignificativoRequest extends BaseRequest{
 
     public function __construct($cuis)
     {
-        $currentConfig = ConfigService::getConfigs();
         $this->requestName = "SolicitudEventoSignificativo";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoPuntoVenta = $currentConfig->sale_point;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = $currentConfig->office;
+        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
         $this->cuis = $cuis;
-        $this->nit = $currentConfig->nit;
+        $this->nit = Config::getNitConfig()->value;
     }
 }

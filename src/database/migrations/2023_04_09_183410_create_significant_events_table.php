@@ -15,13 +15,16 @@ class CreateSignificantEventsTable extends Migration
     {
         Schema::create('sys_significant_events', function (Blueprint $table) {
             $table->id();
-            $table->integer('sale_point_code')->default(0);
             $table->integer('event_code');
             $table->text('description');
+            $table->string('reception_code')->nullable();
+            $table->string('event_cufd');
+            $table->string('cufd')->nullable();
+            $table->string('cafc')->nullable();// ==>=>=>=>=>=>>=
             $table->dateTime('start_datetime');
             $table->dateTime('end_datetime')->nullable();
-            $table->string('cufd');
-            $table->string('reception_code')->nullable();
+            //ESTADO?????????????
+            $table->integer('sale_point')->default(0);
             $table->timestamps();
         });
     }

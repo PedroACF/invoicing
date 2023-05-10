@@ -1,6 +1,7 @@
 <?php
 namespace PedroACF\Invoicing\Requests\PurchaseSale;
 use Carbon\Carbon;
+use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
@@ -24,7 +25,6 @@ class AnulacionFacturaRequest extends BaseRequest
 
     public function __construct($sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $reasonCode, $cuf)
     {
-        $currentConfig = ConfigService::getConfigs();
         $this->requestName = "SolicitudServicioAnulacionFactura";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
@@ -32,10 +32,10 @@ class AnulacionFacturaRequest extends BaseRequest
         $this->codigoModalidad = config("siat_invoicing.mode");
         $this->codigoPuntoVenta = $currentConfig->sale_point;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = $currentConfig->office;
+        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
         $this->cufd = $cufd;
         $this->cuis = $cuis;
-        $this->nit = $currentConfig->nit;
+        $this->nit = Config::getNitConfig()->value;
 
         $this->tipoFacturaDocumento = $invoiceType;
         $this->codigoMotivo = $reasonCode;

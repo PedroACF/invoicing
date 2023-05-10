@@ -18,6 +18,7 @@ class CreateCuisTable extends Migration
             $table->text('cuis');
             $table->dateTime('expired_date');
             $table->boolean('activo')->default(false);
+            $table->integer('sale_point')->default(0);
             $table->timestamps();
         });
     }

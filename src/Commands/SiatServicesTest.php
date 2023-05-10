@@ -325,7 +325,6 @@ class SiatServicesTest extends Command
     }
 
     private function etapaIV($salePoint){
-        $config = ConfigService::getConfigs();
         $emissionDate = ConfigService::getTime();
         $codeService = new CodeService();
         $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint)", true, 'warning');

@@ -6,24 +6,15 @@ use PedroACF\Invoicing\Utils\TokenUtils;
 
 class OperationRepository
 {
+    protected $client;
     public function __construct()
     {
-        $tokenReg = TokenUtils::getValidTokenReg();
         $wsdl = config("siat_invoicing.endpoints.operaciones");
-        $token = $tokenReg->token;
-        $this->client = new \SoapClient($wsdl, [
-            'stream_context' => stream_context_create([
-                'http'=> [
-                    'header' => "apikey: TokenApi $token"
-                ]
-            ]),
-            'cache_wsdl' => WSDL_CACHE_NONE,
-            'compression' => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE,
-        ]);
+        $this->client = app()->call('SoapRepository@getClient', $wsdl);
     }
 
     //cierreOperacionesSistema
-    public function closeSystemOperation(){
+    public function closeOperations(){
         $response = $this->client->cierreOperacionesSistema();
     }
 
@@ -33,12 +24,12 @@ class OperationRepository
     }
 
     //consultaEventoSignificativo
-    public function querySignificantEvent(){
+    public function checkSignificantEvent(){
         $response = $this->client->consultaEventoSignificativo();
     }
 
     //consultaPuntoVenta
-    public function querySalePoint(){
+    public function checkSalePoint(){
         $response = $this->client->consultaPuntoVenta();
     }
 
@@ -53,12 +44,12 @@ class OperationRepository
     }
 
     //registroPuntoVentaComisionista
-    public function addComissionSalePoint(){
-        $response = $this->client->registroPuntoVentaComisionista();
-    }
+//    public function addComissionSalePoint(){
+//        $response = $this->client->registroPuntoVentaComisionista();
+//    }
 
     //verificarComunicacion
-    public function verificarComunicacion(): OperationComunicacionResponse{
+    public function checkConnection(): OperationComunicacionResponse{
         $response = $this->client->verificarComunicacion();
 
         return OperationComunicacionResponse::build($response);

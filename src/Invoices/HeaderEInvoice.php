@@ -39,7 +39,6 @@ class HeaderEInvoice extends BaseHeaderInvoice
     public $codigoDocumentoSector; //1
 
     public function generateCufCode(Cufd $cufdModel){
-        $config = ConfigService::getConfigs();
 
         $nit = str_pad($this->nitEmisor, 13, "0", STR_PAD_LEFT);
         $date = str_replace(["-","T",":","."], "", $this->fechaEmision);

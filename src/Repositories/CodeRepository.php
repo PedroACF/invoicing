@@ -12,22 +12,12 @@ use PedroACF\Invoicing\Utils\TokenUtils;
 
 class CodeRepository
 {
-    private $client;
+    protected $client;
 
     public function __construct()
     {
-        $tokenReg = TokenUtils::getValidTokenReg();
         $wsdl = config("siat_invoicing.endpoints.obtencion_codigos");
-        $token = $tokenReg->token;
-        $this->client = new \SoapClient($wsdl, [
-            'stream_context' => stream_context_create([
-                'http'=> [
-                    'header' => "apikey: TokenApi $token"
-                ]
-            ]),
-            'cache_wsdl' => WSDL_CACHE_NONE,
-            'compression' => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE,
-        ]);
+        $this->client = app()->call('SoapRepository@getClient', $wsdl);
     }
 
     public function cufd(CufdRequest $req): CufdResponse{
@@ -44,11 +34,11 @@ class CodeRepository
         return $this->client->call('notificaCertificadoRevocado');
     }*/
 
-    public function verificarNit(VerificarNitRequest $req){
+    public function checkNit(VerificarNitRequest $req){
         return $this->client->verificarNit($req->toArray());
     }
 
-    public function verificarComunicacion(): CodeComunicacionResponse{
+    public function checkConnection(): CodeComunicacionResponse{
         $response = $this->client->verificarComunicacion();
         return CodeComunicacionResponse::build($response);
     }

@@ -1,8 +1,13 @@
 <?php
 namespace PedroACF\Invoicing;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use PedroACF\Invoicing\Commands\SiatCheckSignature;
 use PedroACF\Invoicing\Commands\SiatServicesTest;
+use PedroACF\Invoicing\Repositories\SoapRepository;
+use PedroACF\Invoicing\Services\ConfigService;
+use PedroACF\Invoicing\Services\KeyService;
+use PedroACF\Invoicing\Services\TokenService;
 
 class InvoicingServiceProvider extends ServiceProvider
 {
@@ -19,6 +24,18 @@ class InvoicingServiceProvider extends ServiceProvider
     }
 
     public function register(){
+        $this->app->singleton(TokenService::class, function(Application $app){
+            return new TokenService();
+        });
+        $this->app->singleton(KeyService::class, function(Application $app){
+            return new KeyService();
+        });
 
+        $this->app->bind(SoapRepository::class, function(Application $app){
+            return new SoapRepository($app->make(TokenService::class));
+        });
+//        $this->app->singleton(ConfigService::class, function(Application $app){
+//            return new ConfigService();
+//        });
     }
 }

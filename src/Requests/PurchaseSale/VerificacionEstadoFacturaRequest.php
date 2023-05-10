@@ -1,6 +1,7 @@
 <?php
 namespace PedroACF\Invoicing\Requests\PurchaseSale;
 use Carbon\Carbon;
+use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
@@ -25,7 +26,6 @@ class VerificacionEstadoFacturaRequest extends BaseRequest
     public function __construct($sectorDocumentCode, $emissionCode, $invoiceType, $cuf)
     {
         $codeService = new CodeService();
-        $currentConfig = ConfigService::getConfigs();
         $this->requestName = "SolicitudServicioVerificacionEstadoFactura";
         $this->codigoAmbiente = config("siat_invoicing.enviroment");
         $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
@@ -33,10 +33,10 @@ class VerificacionEstadoFacturaRequest extends BaseRequest
         $this->codigoModalidad = config("siat_invoicing.mode");
         $this->codigoPuntoVenta = $currentConfig->sale_point;
         $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = $currentConfig->office;
+        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
         $this->cufd = $codeService->getCufdCode();
         $this->cuis = $codeService->getCuisCode();
-        $this->nit = $currentConfig->nit;
+        $this->nit = Config::getNitConfig()->value;
 
         $this->tipoFacturaDocumento = $invoiceType;
         $this->cuf = $cuf;

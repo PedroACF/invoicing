@@ -2,62 +2,65 @@
 
 namespace PedroACF\Invoicing\Services;
 
+use PedroACF\Invoicing\Exceptions\KeyException;
 use PedroACF\Invoicing\Models\SYS\SslKey;
 
 class KeyService
 {
-    public static function addPublicKeyFromPem($pemContent){
-        //disable all public Key
+    private $privateKeyContent;
+    private $publicKeyContent;
+    public function addPublicKeyFromPem($pemContent){
         SslKey::where('type', SslKey::PUBLIC_KEY)->update([
             'enabled' => false
         ]);
-        $newKey = new SslKey();
-        $newKey->content = $pemContent;
-        $newKey->type = SslKey::PUBLIC_KEY;
-        $newKey->enabled = true;
-        $newKey->save();
+        $keyModel = new SslKey();
+        $keyModel->content = $pemContent;
+        $keyModel->type = SslKey::PUBLIC_KEY;
+        $keyModel->enabled = true;
+        $keyModel->save();
+        $this->publicKeyContent = null;
     }
 
-    public static function addPublicKeyFromCrt($crtContent){
-        $pemFromCrt = '-----BEGIN CERTIFICATE-----'
-            .PHP_EOL.chunk_split(base64_encode($crtContent), 64, PHP_EOL)
-            .'-----END CERTIFICATE-----'.PHP_EOL;
-        KeyService::addPublicKeyFromPem($pemFromCrt);
-    }
-
-    public static function addPrivateKeyFromPem($pemContent){
+    public function addPrivateKeyFromPem($pemContent){
         //disable all private Key
         SslKey::where('type', SslKey::PRIVATE_KEY)->update([
             'enabled' => false
         ]);
-        $newKey = new SslKey();
-        $newKey->content = $pemContent;
-        $newKey->type = SslKey::PRIVATE_KEY;
-        $newKey->enabled = true;
-        $newKey->save();
+        $keyModel = new SslKey();
+        $keyModel->content = $pemContent;
+        $keyModel->type = SslKey::PRIVATE_KEY;
+        $keyModel->enabled = true;
+        $keyModel->save();
+        $this->privateKeyContent = null;
     }
 
-    public static function addPrivateKeyFromP12($p12Content, $password){
-        $status = openssl_pkcs12_read($p12Content, $cert, $password);
-        //dd($cert);
-        $privateKeyPemContent = (string)$cert['pkey'];
-        KeyService::addPrivateKeyFromPem($privateKeyPemContent);
-    }
-
-    public static function getAvailablePublicKey(): ?SslKey{
+    public function getPublicKeyModel(): ?SslKey{
         return SslKey::where('enabled', true)->where('type', SslKey::PUBLIC_KEY)->first();
     }
 
-    public static function getPublicCert(): ?string{
-        $model = KeyService::getAvailablePublicKey();
-        if($model){
-            $cert = stream_get_contents($model->content);
-            return $cert;
+    public function getPublicKeyContent(): string{
+        if($this->publicKeyContent==null){
+            $publicModel = $this->getPublicKeyModel();
+            if(!$publicModel){
+                throw new KeyException();
+            }
+            $this->publicKeyContent = stream_get_contents($publicModel->content);
         }
-        return null;
+        return $this->publicKeyContent;
     }
 
-    public static function getAvailablePrivateKey(): ?SslKey{
+    public function getPrivateKeyModel(): ?SslKey{
         return SslKey::where('enabled', true)->where('type', SslKey::PRIVATE_KEY)->first();
+    }
+
+    public function getPrivateKeyContent(): string{
+        if($this->privateKeyContent==null){
+            $privateModel = $this->getPrivateKeyModel();
+            if(!$privateModel){
+                throw new KeyException();
+            }
+            $this->privateKeyContent = stream_get_contents($privateModel->content);
+        }
+        return $this->privateKeyContent;
     }
 }

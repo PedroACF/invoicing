@@ -17,9 +17,9 @@ class CreateCufdTable extends Migration
             $table->id();
             $table->text('cufd');
             $table->string('codigo_control');
-            $table->string('direccion');
             $table->dateTime('expired_date');
             $table->boolean('activo')->default(false);
+            $table->integer('sale_point')->default(0);
             $table->timestamps();
         });
     }

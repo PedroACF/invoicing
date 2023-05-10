@@ -32,6 +32,8 @@ class CreateInvoicesTable extends Migration
             $table->unsignedBigInteger('significant_event_id')->nullable();
             $table->foreign('significant_event_id')->references('id')->on('sys_significant_events');
 
+            $table->integer('sale_point')->default(0);
+
             $table->timestamps();
         });
 
