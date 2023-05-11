@@ -16,15 +16,16 @@ class CuisRequest extends BaseRequest
     public $codigoSucursal = -1;//0=>Casa matriz
     public $nit = "";
 
-    public function __construct()
+    public function __construct($salePoint = 0)
     {
+        $config = app(ConfigService::class);
         $this->requestName = "SolicitudCuis";
-        $this->codigoAmbiente = config("siat_invoicing.enviroment");
-        $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoPuntoVenta = $currentConfig->sale_point;
-        $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
-        $this->nit = Config::getNitConfig()->value;
+        $this->codigoAmbiente = $config->getEnvironment();
+        $this->codigoModalidad = $config->getInvoiceMode();
+        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoSistema = $config->getSystemCode();
+        $this->codigoSucursal = $config->getOfficeCode();
+        $this->nit = $config->getNit();
     }
 
 }

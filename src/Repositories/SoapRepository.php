@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Repositories;
 
 use PedroACF\Invoicing\Services\TokenService;
+use SoapClient;
 
 class SoapRepository
 {
@@ -11,10 +12,10 @@ class SoapRepository
         $this->tokenService = $tokenService;
     }
 
-    public function getClient(string $wsdl){
+    public function getClient(string $wsdl): SoapClient{
         $tokenModel = $this->tokenService->getDelegateToken();
         $token = $tokenModel->token;
-        $this->client = new \SoapClient($wsdl, [
+        return new SoapClient($wsdl, [
             'stream_context' => stream_context_create([
                 'http'=> [
                     'header' => "apikey: TokenApi $token"

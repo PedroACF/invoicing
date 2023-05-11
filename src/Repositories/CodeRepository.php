@@ -2,13 +2,14 @@
 
 namespace PedroACF\Invoicing\Repositories;
 
+use PedroACF\Invoicing\Exceptions\SoapException;
 use PedroACF\Invoicing\Requests\Code\CufdRequest;
 use PedroACF\Invoicing\Requests\Code\VerificarNitRequest;
 use PedroACF\Invoicing\Responses\Code\CodeComunicacionResponse;
 use PedroACF\Invoicing\Responses\Code\CufdResponse;
 use PedroACF\Invoicing\Requests\Code\CuisRequest;
 use PedroACF\Invoicing\Responses\Code\CuisResponse;
-use PedroACF\Invoicing\Utils\TokenUtils;
+use SoapFault;
 
 class CodeRepository
 {
@@ -16,18 +17,29 @@ class CodeRepository
 
     public function __construct()
     {
-        $wsdl = config("siat_invoicing.endpoints.obtencion_codigos");
-        $this->client = app()->call('SoapRepository@getClient', $wsdl);
+        $wsdl = config("pacf_invoicing.endpoints.obtencion_codigos");
+        $this->client = app()->call(function(SoapRepository $soap) use ($wsdl){
+            return $soap->getClient($wsdl);
+        });
     }
 
     public function cufd(CufdRequest $req): CufdResponse{
-        $response = $this->client->cufd( $req->toArray() );
-        return CufdResponse::build($response);
+        try{
+            $response = $this->client->cufd( $req->toArray() );
+            return CufdResponse::build($response);
+        }catch(SoapFault $ex){
+            throw new SoapException($ex->getMessage());
+        }
+
     }
 
     public function cuis(CuisRequest $req): CuisResponse{
-        $response = $this->client->cuis( $req->toArray());
-        return CuisResponse::build($response);
+        try{
+            $response = $this->client->cuis( $req->toArray() );
+            return CuisResponse::build($response);
+        }catch (SoapFault $ex){
+            throw new SoapException($ex->getMessage());
+        }
     }
 
     /*public function notificaCertificadoRevocado(){
@@ -35,11 +47,20 @@ class CodeRepository
     }*/
 
     public function checkNit(VerificarNitRequest $req){
-        return $this->client->verificarNit($req->toArray());
+        try{
+            return $this->client->verificarNit($req->toArray());
+        }catch (SoapFault $ex){
+            throw new SoapException($ex->getMessage());
+        }
     }
 
     public function checkConnection(): CodeComunicacionResponse{
-        $response = $this->client->verificarComunicacion();
-        return CodeComunicacionResponse::build($response);
+        try{
+            $response = $this->client->verificarComunicacion();
+            return CodeComunicacionResponse::build($response);
+        }catch (SoapFault $ex){
+            dump($ex);
+            throw new SoapException($ex->getMessage());
+        }
     }
 }

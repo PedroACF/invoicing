@@ -11,13 +11,11 @@ class CuisResponse extends BaseResponse
     public $fechaVigencia = "";
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaCuis', []);
+        $data = $response->RespuestaCuis ?? (object)[];
         $object = new CuisResponse();
-        $object->buildBase($resp);
-        $object->codigo = Arr::get($resp, 'codigo', "");
-        $fechaVigencia = Arr::get($resp, 'fechaVigencia', '');
-        $object->fechaVigencia = strlen($fechaVigencia)>0? new Carbon($fechaVigencia): null;
+        $object->buildBase($data);
+        $object->codigo = $data->codigo ?? '';
+        $object->fechaVigencia = isset($data->fechaVigencia)? new Carbon($data->fechaVigencia): null;
         return $object;
     }
 }

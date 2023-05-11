@@ -3,12 +3,12 @@
 namespace PedroACF\Invoicing\Services;
 
 use Carbon\Carbon;
-use PedroACF\Invoicing\Exceptions\TokenNotFoundException;
+use PedroACF\Invoicing\Exceptions\DelegatedTokenNotFoundException;
 use PedroACF\Invoicing\Models\SYS\DelegateToken;
 
 class TokenService
 {
-    public function addDelegateToken(string $token, Carbon $expiredDate){
+    public function addDelegateToken(string $token, string $expiredDate){
         DelegateToken::where('activo', true)->update(['activo'=> false]);
         $newToken = new DelegateToken();
         $newToken->token = $token;
@@ -22,7 +22,7 @@ class TokenService
             ['activo', '=', true]
         ])->orderBy('created_at', 'desc')->first();
         if(!$tokenModel){
-            throw new TokenNotFoundException();
+            throw new DelegatedTokenNotFoundException("Token delegado no encontrado");
         }
         return $tokenModel;
     }

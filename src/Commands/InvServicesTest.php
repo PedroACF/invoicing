@@ -19,17 +19,18 @@ use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
+use PedroACF\Invoicing\Services\TokenService;
 use PedroACF\Invoicing\Utils\XmlSigner;
 use PedroACF\Invoicing\Utils\XmlValidator;
 
-class SiatServicesTest extends Command
+class InvServicesTest extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'siat:test';
+    protected $signature = 'inv:test';
 
     /**
      * The console command description.
@@ -40,15 +41,20 @@ class SiatServicesTest extends Command
 
     private $salePointLimit = 0;
 
+    private $configService;
+    private $tokenService;
+    private $keyService;
+
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(ConfigService $configService, TokenService $tokenService, KeyService $keyService)
     {
-        //$this->configService = new ConfigService();
-        //$this->tokenService = new Service
+        $this->configService = $configService;
+        $this->tokenService = $tokenService;
+        $this->keyService = $keyService;
         parent::__construct();
     }
 
@@ -63,31 +69,42 @@ class SiatServicesTest extends Command
 
         $delegateToken = $this->readDelegateToken();
         $expiredDate = $this->readDateToken();
-        ConfigService::addDelegateToken($delegateToken, $expiredDate);
+        $this->tokenService->addDelegateToken($delegateToken, $expiredDate);
 
         $publicKey = $this->readPublicKey();
-        KeyService::addPublicKeyFromPem($publicKey);
+        $this->keyService->addPublicKeyFromPem($publicKey);
 
         $privateKey = $this->readPrivateKey();
-        KeyService::addPrivateKeyFromPem($privateKey);
+        $this->keyService->addPrivateKeyFromPem($privateKey);
 
-        $salePoint = 0;
-        while($salePoint<=$this->salePointLimit){
-            // TODO: Arreglar para mas puntos de venta
-            ConfigService::setConfigSalePoint($salePoint);
-//            $this->etapaI($salePoint);
+        $salePoint = 0; // Sin puntos de venta
+        $this->etapaI($salePoint);
 //            $this->etapaII($salePoint);
 //            $this->etapaIII($salePoint);
 //            $this->etapaIV($salePoint);
 //            $this->etapaV();
 //            $this->etapaVI();
-            $this->etapaVII($salePoint);
-//            $this->etapaVIII();
-            $salePoint++;
-        }
+        //$this->etapaVII($salePoint);
+
     }
 
     private function readAndSetConfigs(){
+        //READ System Code
+        $fieldValidator = [ 'code' => 'required' ];
+        $showPrompt = true;
+        $code = '';
+        while($showPrompt){
+            $code = $this->ask('Ingrese Codigo Sistema');
+            $validator = Validator::make(['code' => $code], $fieldValidator);
+            if($validator->fails()){
+                $errors = $validator->errors()->messages()['code'];
+                $errors = implode(', ', $errors);
+                $this->writeMessage("> Error: $errors", false, 'error');
+                continue;
+            }
+            $showPrompt = false;
+        }
+
         //READ NIT
         $fieldValidator = [ 'nit' => 'required' ];
         $showPrompt = true;
@@ -136,22 +153,6 @@ class SiatServicesTest extends Command
             $showPrompt = false;
         }
 
-        //READ Phone
-        $fieldValidator = [ ];
-        $showPrompt = true;
-        $phone = '';
-        while($showPrompt){
-            $phone = $this->ask('Ingrese Telefono', '');
-            $validator = Validator::make(['phone' => $phone], $fieldValidator);
-            if($validator->fails()){
-                $errors = $validator->errors()->messages()['phone'];
-                $errors = implode(', ', $errors);
-                $this->writeMessage("> Error: $errors", false, 'error');
-                continue;
-            }
-            $showPrompt = false;
-        }
-
         //READ Office
         $fieldValidator = [ 'office' => 'required|numeric' ];
         $showPrompt = true;
@@ -161,6 +162,22 @@ class SiatServicesTest extends Command
             $validator = Validator::make(['office' => $office], $fieldValidator);
             if($validator->fails()){
                 $errors = $validator->errors()->messages()['office'];
+                $errors = implode(', ', $errors);
+                $this->writeMessage("> Error: $errors", false, 'error');
+                continue;
+            }
+            $showPrompt = false;
+        }
+
+        //READ Phone
+        $fieldValidator = [ ];
+        $showPrompt = true;
+        $phone = '';
+        while($showPrompt){
+            $phone = $this->ask('Ingrese Telefono sucursal', '');
+            $validator = Validator::make(['phone' => $phone], $fieldValidator);
+            if($validator->fails()){
+                $errors = $validator->errors()->messages()['phone'];
                 $errors = implode(', ', $errors);
                 $this->writeMessage("> Error: $errors", false, 'error');
                 continue;
@@ -184,12 +201,18 @@ class SiatServicesTest extends Command
             $showPrompt = false;
         }
 
-        Config::setNitConfig($nit);
-        Config::setBusinessNameConfig($businessName);
-        Config::setBusinessPhoneConfig($phone);
-        Config::setOfficeCodeConfig($office);
-        Config::setOfficeAddressConfig($office_address);
-        Config::setMunicipalityConfig($municipality);
+        $this->configService->setEnvironment(Config::$ENV_TEST);
+        $this->configService->setInvoiceMode(Config::$MODE_ELEC);
+        $this->configService->setSystemCode($code);
+
+//        $configService->setOfficeCode(0);
+//        $configService->setOfficeAddress('18 de nobiembre');
+        $this->configService->setNit($nit);
+        $this->configService->setBusinessName($businessName);
+        $this->configService->setMunicipality($municipality);
+        $this->configService->setOfficeCode(0);
+        $this->configService->setOfficePhone($phone);
+        $this->configService->setOfficeAddress($office_address);
         //server_time_diff, LAST_INVOICE_NUMBER
     }
 
@@ -207,26 +230,28 @@ class SiatServicesTest extends Command
                 $this->writeMessage("> Error: $errors", false, 'error');
                 continue;
             }
+            $this->delegatedToken = $dToken;
+            $showPrompt = false;
 
-            try{
-                list($header, $body) = explode('.', $dToken);
-                $body = base64_decode($body);
-                $data = json_decode($body);
-                if($data->codigoSistema != config("siat_invoicing.system_code")){
-                    $validator->errors()->add('token', "Codigo de sistema incorrecto para el token ingresado");
-                    $errors = $validator->errors()->messages()['token'];
-                    $errors = implode(', ', $errors);
-                    $this->writeMessage("> Error: $errors", false, 'error');
-                    continue;
-                }
-                $showPrompt = false;
-                $this->delegatedToken = $dToken;
-            }catch(\Exception $e){
-                $validator->errors()->add('token', $e->getMessage());
-                $errors = $validator->errors()->messages()['token'];
-                $errors = implode(', ', $errors);
-                $this->writeMessage("> Error: $errors", false, 'error');
-            }
+//            try{
+//                list($header, $body) = explode('.', $dToken);
+//                $body = base64_decode($body);
+//                $data = json_decode($body);
+//                if($data->codigoSistema != config("siat_invoicing.system_code")){
+//                    $validator->errors()->add('token', "Codigo de sistema incorrecto para el token ingresado");
+//                    $errors = $validator->errors()->messages()['token'];
+//                    $errors = implode(', ', $errors);
+//                    $this->writeMessage("> Error: $errors", false, 'error');
+//                    continue;
+//                }
+//                $showPrompt = false;
+//                $this->delegatedToken = $dToken;
+//            }catch(\Exception $e){
+//                $validator->errors()->add('token', $e->getMessage());
+//                $errors = $validator->errors()->messages()['token'];
+//                $errors = implode(', ', $errors);
+//                $this->writeMessage("> Error: $errors", false, 'error');
+//            }
         }
         return $dToken;
     }
@@ -709,12 +734,12 @@ class SiatServicesTest extends Command
     }
 
     private function etapaI($salePoint){
-        $codeService = new CodeService();
+        $codeService = app(CodeService::class);
         $this->writeMessage("Etapa I: Obtencion de CUIS (punto de venta: $salePoint)", true, 'warning');
         $testLimit = 1;
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $codeService->getCuisCode(true);
+                $codeService->getCuisCode($salePoint, true);
                 $passed = true;
             }catch (\Exception $e){
                 dump($e);

@@ -14,14 +14,14 @@ use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Utils\XmlSigner;
 
-class SiatCheckSignature extends Command
+class InvCheckSignature extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'siat:signature';
+    protected $signature = 'inv:signature';
     private $invoicesCount = 0;
 
     /**
@@ -53,7 +53,6 @@ class SiatCheckSignature extends Command
      */
     public function handle()
     {
-
         $this->readPublicKey();
         $this->readPrivateKey();
         $this->readInvoicesCount();
