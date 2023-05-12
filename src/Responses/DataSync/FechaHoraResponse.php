@@ -10,11 +10,10 @@ class FechaHoraResponse extends BaseResponse
     public $date;
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaFechaHora', []);
+        $data = $response->RespuestaFechaHora ?? (object)[];
         $object = new FechaHoraResponse();
-        $object->buildBase($resp);
-        $object->date = new Carbon(Arr::get($resp, 'fechaHora'));
+        $object->buildBase($data);
+        $object->date = new Carbon($data->fechaHora);
         return $object;
     }
 }

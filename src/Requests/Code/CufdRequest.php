@@ -16,15 +16,16 @@ class CufdRequest extends BaseRequest
     public $cuis = "";
     public $nit = "";
 
-    public function __construct($cuis)
+    public function __construct($salePoint, $cuis)
     {
+        $config = app(ConfigService::class);
         $this->requestName = "SolicitudCufd";
-        $this->codigoAmbiente = config("siat_invoicing.enviroment");
-        $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoPuntoVenta = $currentConfig->sale_point;
-        $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
+        $this->codigoAmbiente = $config->getEnvironment();
+        $this->codigoModalidad = $config->getInvoiceMode();
+        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoSistema = $config->getSystemCode();
+        $this->codigoSucursal = $config->getOfficeCode();
         $this->cuis = $cuis;
-        $this->nit = Config::getNitConfig()->value;
+        $this->nit = $config->getNit();
     }
 }

@@ -9,17 +9,12 @@ class ListaParametricasLeyendasResponse extends BaseResponse
     public $items = [];
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaListaParametricasLeyendas', []);
+        $data = $response->RespuestaListaParametricasLeyendas ?? (object)[];
         $object = new ListaParametricasLeyendasResponse();
-        $object->buildBase($resp);
-
+        $object->buildBase($data);
         $items = [];
-        foreach (Arr::get($resp, 'listaLeyendas', [] ) as $item){
-            $items[] = new ParamLeyenda(
-                Arr::get($item, 'codigoActividad', ""),
-                Arr::get($item, 'descripcionLeyenda', "")
-            );
+        foreach ($data->listaLeyendas ?? [] as $item){
+            $items[] = new ParamLeyenda($item->codigoActividad??'', $item->descripcionLeyenda ?? '');
         }
         $object->items = $items;
         return $object;

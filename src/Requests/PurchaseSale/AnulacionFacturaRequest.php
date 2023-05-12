@@ -23,19 +23,20 @@ class AnulacionFacturaRequest extends BaseRequest
     public $cuf = 0;
 
 
-    public function __construct($sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $reasonCode, $cuf)
+    public function __construct($salePoint, $sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $reasonCode, $cuf)
     {
+        $config = app(ConfigService::class);
         $this->requestName = "SolicitudServicioAnulacionFactura";
-        $this->codigoAmbiente = config("siat_invoicing.enviroment");
+        $this->codigoAmbiente = $config->getEnvironment();
         $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
         $this->codigoEmision = $emissionCode; //TODO: Verificar
-        $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoPuntoVenta = $currentConfig->sale_point;
-        $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
+        $this->codigoModalidad = $config->getInvoiceMode();
+        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoSistema = $config->getSystemCode();
+        $this->codigoSucursal = $config->getOfficeCode();
         $this->cufd = $cufd;
         $this->cuis = $cuis;
-        $this->nit = Config::getNitConfig()->value;
+        $this->nit = $config->getNit();
 
         $this->tipoFacturaDocumento = $invoiceType;
         $this->codigoMotivo = $reasonCode;

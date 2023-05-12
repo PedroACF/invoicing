@@ -19,6 +19,7 @@ class ConfigService extends BaseService
     private $environment = null;//1 => PRODUCCION, 2 => PRUEBAS
     private $invoiceMode = null;//1 => ELECTRONICA, 2 => COMPUTARIZADA
     private $systemCode = null;
+    private $sectorDocumentCode = null;
 
     public function getAvailableInvoiceNumber(): int{
         $model = $this->getLastInvoiceNumber();
@@ -225,7 +226,27 @@ class ConfigService extends BaseService
         $this->invoiceMode = null;
     }
 
-//    private $mode = null;
+    public function getSectorDocumentCode(){//Codigo Documento sector
+        if($this->sectorDocumentCode == null){
+            $model = Config::where('key', 'SECTOR_DOCUMENT_CODE')->first();
+            if($model && strlen($model->value)>0 ){
+                $this->sectorDocumentCode = (int)$model->value;
+            }else{
+                throw new ConfigException('Documento sector no configurado');
+            }
+        }
+        return $this->sectorDocumentCode;
+    }
+
+    public function setSectorDocumentCode(int $newVal){
+        Config::firstOrCreate([
+            'key' => 'SECTOR_DOCUMENT_CODE'
+        ], [
+            'data_type' => 'int',
+            'value' => (string)$newVal
+        ]);
+        $this->sectorDocumentCode = null;
+    }
 
     public function getServerTimeDiff(){
         return Config::firstOrCreate([

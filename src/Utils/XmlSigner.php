@@ -7,18 +7,18 @@ use PedroACF\Invoicing\Services\KeyService;
 
 class XmlSigner
 {
-    private $keyService;
-    public function __construct()
+    protected $keyService;
+    public function __construct(KeyService $keyService)
     {
-        $this->keyService = new KeyService();
+        $this->keyService = $keyService;
     }
 
     public function sign(string $xmlString): ?string{
-        $privateKeyEntity = $this->keyService->getAvailablePrivateKey();
+        $privateKeyEntity = $this->keyService->getPrivateKeyModel();
         if($privateKeyEntity==null){
             throw new KeyException();
         }
-        $publicCert = $this->keyService->getPublicCert();
+        $publicCert = $this->keyService->getPublicKeyContent();
         if($publicCert==null){
             throw new KeyException();
         }

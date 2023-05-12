@@ -38,7 +38,7 @@ class HeaderEInvoice extends BaseHeaderInvoice
     public $usuario; //pperez
     public $codigoDocumentoSector; //1
 
-    public function generateCufCode(Cufd $cufdModel){
+    public function generateCufCode(Cufd $cufdModel, $salePoint){
 
         $nit = str_pad($this->nitEmisor, 13, "0", STR_PAD_LEFT);
         $date = str_replace(["-","T",":","."], "", $this->fechaEmision);
@@ -48,7 +48,7 @@ class HeaderEInvoice extends BaseHeaderInvoice
         $invoiceType = 1;//SACAR DE LA BD
         $sectorType = str_pad(1, 2, "0", STR_PAD_LEFT);//SACAR DE LA BD
         $invoiceNumber = str_pad($this->numeroFactura, 10, "0", STR_PAD_LEFT);
-        $salePoint = str_pad($config->sale_point, 4, "0", STR_PAD_LEFT);
+        $salePoint = str_pad($salePoint, 4, "0", STR_PAD_LEFT);
 
         $cuf = $nit.$date.$office.$mode.$emissionType.$invoiceType.$sectorType.$invoiceNumber.$salePoint;
         $number = $this->mod11String($cuf);

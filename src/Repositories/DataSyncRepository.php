@@ -1,7 +1,7 @@
 <?php
 namespace PedroACF\Invoicing\Repositories;
 
-use Carbon\Carbon;
+use PedroACF\Invoicing\Exceptions\SoapException;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
 use PedroACF\Invoicing\Responses\DataSync\DataSyncComunicacionResponse;
 use PedroACF\Invoicing\Responses\DataSync\FechaHoraResponse;
@@ -10,26 +10,18 @@ use PedroACF\Invoicing\Responses\DataSync\ListaActividadesResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaParametricasLeyendasResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaParametricasResponse;
 use PedroACF\Invoicing\Responses\DataSync\ListaProductosResponse;
-use PedroACF\Invoicing\Utils\TokenUtils;
+use SoapFault;
 
 class DataSyncRepository
 {
-    private $client;
+    protected $client;
 
     public function __construct()
     {
-        $tokenReg = TokenUtils::getValidTokenReg();
-        $wsdl = config("siat_invoicing.endpoints.sincronizacion_datos");
-        $token = $tokenReg->token;
-        $this->client = new \SoapClient($wsdl, [
-            'stream_context' => stream_context_create([
-                'http'=> [
-                    'header' => "apikey: TokenApi $token"
-                ]
-            ]),
-            'cache_wsdl' => WSDL_CACHE_NONE,
-            'compression' => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE,
-        ]);
+        $wsdl = config("pacf_invoicing.endpoints.sincronizacion_datos");
+        $this->client = app()->call(function(SoapRepository $soap) use ($wsdl){
+            return $soap->getClient($wsdl);
+        });
     }
 
     //sincronizarFechaHora
@@ -140,8 +132,13 @@ class DataSyncRepository
         return ListaParametricasResponse::build($response);
     }
 
-    public function verificarComunicacion(): DataSyncComunicacionResponse{
-        $response = $this->client->verificarComunicacion();
-        return DataSyncComunicacionResponse::build($response);
+    public function checkConnection(): DataSyncComunicacionResponse{
+        try{
+            $response = $this->client->verificarComunicacion();
+            return DataSyncComunicacionResponse::build($response);
+        }catch (SoapFault $ex){
+            dump($ex);
+            throw new SoapException($ex->getMessage());
+        }
     }
 }

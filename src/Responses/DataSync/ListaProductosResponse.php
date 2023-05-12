@@ -9,17 +9,15 @@ class ListaProductosResponse extends BaseResponse
     public $items = [];
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaListaProductos', []);
+        $data = $response->RespuestaListaProductos ?? (object)[];
         $object = new ListaProductosResponse();
-        $object->buildBase($resp);
-
+        $object->buildBase($data);
         $items = [];
-        foreach (Arr::get($resp, 'listaCodigos', [] ) as $item){
+        foreach ($data->listaCodigos??[] as $item){
             $items[] = new ParamProducto(
-                Arr::get($item, 'codigoActividad', ""),
-                Arr::get($item, 'codigoProducto', ""),
-                Arr::get($item, 'descripcionProducto', "")
+                $item->codigoActividad??'',
+                $item->codigoProducto??'',
+                $item->descripcionProducto??''
             );
         }
         $object->items = $items;

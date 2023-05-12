@@ -9,16 +9,14 @@ class ListaParametricasResponse extends BaseResponse
     public $items = [];
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaListaParametricas', []);
+        $data = $response->RespuestaListaParametricas ?? (object)[];
         $object = new ListaParametricasResponse();
-        $object->buildBase($resp);
-
+        $object->buildBase($data);
         $items = [];
-        foreach (Arr::get($resp, 'listaCodigos', [] ) as $item){
+        foreach ($data->listaCodigos ?? [] as $item){
             $items[] = new ParamCodigo(
-                Arr::get($item, 'codigoClasificador', ""),
-                Arr::get($item, 'descripcion', "")
+                $item->codigoClasificador??'',
+                $item->descripcion??''
             );
         }
         $object->items = $items;

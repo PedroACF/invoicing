@@ -9,17 +9,16 @@ class ListaActividadesDocumentoSectorResponse extends BaseResponse
     public $items = [];
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaListaActividadesDocumentoSector', []);
-        $object = new ListaActividadesDocumentoSectorResponse();
-        $object->buildBase($resp);
 
+        $data = $response->RespuestaListaActividadesDocumentoSector ?? (object)[];
+        $object = new ListaActividadesDocumentoSectorResponse();
+        $object->buildBase($data);
         $list = [];
-        foreach (Arr::get($resp, 'listaActividadesDocumentoSector', [] ) as $item){
+        foreach($data->listaActividadesDocumentoSector??[] as $item){
             $list[] = new ActividadDocumentoSector(
-                Arr::get($item, 'codigoActividad', ""),
-                Arr::get($item, 'codigoDocumentoSector', ""),
-                Arr::get($item, 'tipoDocumentoSector', "")
+                $item->codigoActividad?? '',
+                $item->codigoDocumentoSector?? '',
+                $item->tipoDocumentoSector??''
             );
         }
         $object->items = $list;

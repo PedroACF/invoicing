@@ -24,19 +24,21 @@ class RecepcionFacturaRequest extends BaseRequest
     public $hashArchivo = '';
 
 
-    public function __construct($sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $file, $hash)
+    public function __construct($salePoint, $emissionCode, $cufd, $cuis, $invoiceType, $file, $hash)
     {
+        $config = app(ConfigService::class);
+        //$config = new ConfigService();
         $this->requestName = "SolicitudServicioRecepcionFactura";
-        $this->codigoAmbiente = config("siat_invoicing.enviroment");
-        $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
+        $this->codigoAmbiente = $config->getEnvironment();
+        $this->codigoDocumentoSector = $config->getSectorDocumentCode();
         $this->codigoEmision = $emissionCode; //TODO: Verificar
-        $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoPuntoVenta = $currentConfig->sale_point;
-        $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
+        $this->codigoModalidad = $config->getInvoiceMode();
+        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoSistema = $config->getSystemCode();
+        $this->codigoSucursal = $config->getOfficeCode();
         $this->cufd = $cufd;
         $this->cuis = $cuis;
-        $this->nit = Config::getNitConfig()->value;
+        $this->nit = $config->getNit();
 
         $this->tipoFacturaDocumento = $invoiceType;
         $this->archivo = $file;

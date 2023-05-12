@@ -20,51 +20,70 @@ class CodeService extends BaseService
         $this->codeRepo = $codeRepository;
     }
 
-    public function getCuisCode($salePoint = 0, $forceNew = false): string{
+    public function getCuisCode($salePoint = 0, $forceNew = false): ?string{
         $cuisModel = $this->getValidCuisModel($salePoint);
         if($cuisModel && !$forceNew){
             return $cuisModel->cuis;
         }
-        // Solicitar cuis nuevo y desactivar los otros
-        $request = new CuisRequest($salePoint);
-        $response = $this->codeRepo->cuis($request);
-        if($response->hasCodes([])){
-            throw new BaseException("Error");//TODO: Definir que codigo genera error
+
+        //Verificar conexion
+        $conn = $this->codeRepo->checkConnection();
+        if($conn->transaccion && $conn->hasCodes([926])){
+            // Solicitar cuis nuevo y desactivar los otros
+            $request = new CuisRequest($salePoint);
+            $response = $this->codeRepo->cuis($request);
+            if($response->hasCodes([])){
+                throw new BaseException("Error CUIS");//TODO: Definir que codigo genera error
+            }
+            $cuisModel = Cuis::where([
+                ['activo', '=', true],
+                ['cuis', '=', $response->codigo],
+            ])->first();
+            Cuis::where('activo', true)->where('sale_point', $salePoint)->update(['activo'=> false]);
+            if(!$cuisModel) {
+                $cuisModel = new Cuis();
+                $cuisModel->cuis = $response->codigo;
+                $cuisModel->expired_date = $response->fechaVigencia;
+                $cuisModel->sale_point = $salePoint;
+            }
+            $cuisModel->activo = true;
+            $cuisModel->save();
+            return $cuisModel->cuis;
         }
-        $cuisModel = Cuis::where([
-            ['activo', '=', true],
-            ['cuis', '=', $response->codigo],
-        ])->first();
-        Cuis::where('activo', true)->where('sale_point', $salePoint)->update(['activo'=> false]);
-        if(!$cuisModel) {
-            $cuisModel = new Cuis();
-            $cuisModel->cuis = $response->codigo;
-            $cuisModel->expired_date = $response->fechaVigencia;
-            $cuisModel->sale_point = $salePoint;
-        }
-        $cuisModel->activo = true;
-        $cuisModel->save();
-        return $cuisModel->cuis;
+        return null;
     }
 
-    public function getCufdCode($forceNew = false): string{
-        $cufdModel = $this->getValidCufdModel();
+    public function getCufdCode($salePoint = 0, $forceNew = false): ?string{
+        $cufdModel = $this->getValidCufdModel($salePoint);
         if($cufdModel && !$forceNew){
             return $cufdModel->cufd;
         }
-        // Solicitar cufd nuevo y desactivar los otros
-        Cufd::where('activo', true)->update(['activo'=> false]);
-        $cuis = $this->getCuisCode();
-        $cufdReq = new CufdRequest($cuis);
-        $remote = $this->codeRepo->cufd($cufdReq);
-        $model = new Cufd();
-        $model->cufd = $remote->codigo;
-        $model->codigo_control = $remote->codigoControl;
-        $model->direccion = $remote->direccion;
-        $model->expired_date = $remote->fechaVigencia;
-        $model->activo = true;
-        $model->save();
-        return $model->cufd;
+        //Verificar conexion
+        $conn = $this->codeRepo->checkConnection();
+        if($conn->transaccion && $conn->hasCodes([926])){
+            $cuis = $this->getCuisCode($salePoint);
+            $request = new CufdRequest($salePoint, $cuis);
+            $response = $this->codeRepo->cufd($request);
+            if($response->hasCodes([])){
+                throw new BaseException("Error CUFD");//TODO: Definir que codigo genera error
+            }
+            $model = Cufd::where([
+                ['activo', '=', true],
+                ['cufd', '=', $response->codigo],
+            ])->first();
+            Cufd::where('activo', true)->where('sale_point', $salePoint)->update(['activo'=> false]);
+            if(!$model){
+                $model = new Cufd();
+                $model->cufd = $response->codigo;
+                $model->codigo_control = $response->codigoControl;
+                $model->sale_point = $salePoint;
+                $model->expired_date = $response->fechaVigencia;
+            }
+            $model->activo = true;
+            $model->save();
+            return $model->cufd;
+        }
+        return null;
     }
 
     public function checkNit($nitToVerify){
@@ -75,14 +94,14 @@ class CodeService extends BaseService
         dd($response);
     }
 
-    public function getValidCuisModel($salePoint = 0): ?Cuis{
+    public function getValidCuisModel(int $salePoint): ?Cuis{
         $now = Carbon::now();
         return Cuis::where('activo', true)->where('expired_date', '>', $now)->where('sale_point', $salePoint)->first();
     }
 
-    public function getValidCufdModel(): ?Cufd{
+    public function getValidCufdModel(int $salePoint): ?Cufd{
         $now = Carbon::now();
-        return Cufd::where('activo', true)->where('expired_date', '>', $now)->first();
+        return Cufd::where('activo', true)->where('expired_date', '>', $now)->where('sale_point', $salePoint)->first();
     }
 
 }

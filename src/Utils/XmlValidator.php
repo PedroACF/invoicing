@@ -15,7 +15,7 @@ class XmlValidator
     }
 
     public function validate(){
-        $schema = config("siat_invoicing.main_schema");
+        $schema = config("pacf_invoicing.main_schema");
 //        dump(__DIR__.'/../Schemas/'.$schema.".xsd");
         $result = $this->xml->schemaValidate(__DIR__.'/../Schemas/'.$schema.".xsd");
 //        dump($result);

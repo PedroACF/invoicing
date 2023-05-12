@@ -2,6 +2,7 @@
 
 namespace PedroACF\Invoicing\Commands;
 
+use Carbon\Carbon;
 use Faker\Factory as Faker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
@@ -10,6 +11,7 @@ use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
 use PedroACF\Invoicing\Models\SIN\IdentityDocType;
+use PedroACF\Invoicing\Models\SIN\Legend;
 use PedroACF\Invoicing\Models\SIN\Product;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
@@ -65,11 +67,9 @@ class InvServicesTest extends Command
      */
     public function handle()
     {
-        $this->readAndSetConfigs();
+        $this->readAndSetDelegateToken();
 
-        $delegateToken = $this->readDelegateToken();
-        $expiredDate = $this->readDateToken();
-        $this->tokenService->addDelegateToken($delegateToken, $expiredDate);
+        $this->readAndSetConfigs();
 
         $publicKey = $this->readPublicKey();
         $this->keyService->addPublicKeyFromPem($publicKey);
@@ -78,49 +78,17 @@ class InvServicesTest extends Command
         $this->keyService->addPrivateKeyFromPem($privateKey);
 
         $salePoint = 0; // Sin puntos de venta
-        $this->etapaI($salePoint);
-//            $this->etapaII($salePoint);
-//            $this->etapaIII($salePoint);
-//            $this->etapaIV($salePoint);
+        $this->etapaI($salePoint, 1);
+        $this->etapaII($salePoint, 1);
+        $this->etapaIII($salePoint, 1);
+        $this->etapaIV($salePoint, 1);
 //            $this->etapaV();
 //            $this->etapaVI();
-        //$this->etapaVII($salePoint);
+        $this->etapaVII($salePoint);
 
     }
 
     private function readAndSetConfigs(){
-        //READ System Code
-        $fieldValidator = [ 'code' => 'required' ];
-        $showPrompt = true;
-        $code = '';
-        while($showPrompt){
-            $code = $this->ask('Ingrese Codigo Sistema');
-            $validator = Validator::make(['code' => $code], $fieldValidator);
-            if($validator->fails()){
-                $errors = $validator->errors()->messages()['code'];
-                $errors = implode(', ', $errors);
-                $this->writeMessage("> Error: $errors", false, 'error');
-                continue;
-            }
-            $showPrompt = false;
-        }
-
-        //READ NIT
-        $fieldValidator = [ 'nit' => 'required' ];
-        $showPrompt = true;
-        $nit = '';
-        while($showPrompt){
-            $nit = $this->ask('Ingrese NIT');
-            $validator = Validator::make(['nit' => $nit], $fieldValidator);
-            if($validator->fails()){
-                $errors = $validator->errors()->messages()['nit'];
-                $errors = implode(', ', $errors);
-                $this->writeMessage("> Error: $errors", false, 'error');
-                continue;
-            }
-            $showPrompt = false;
-        }
-
         //READ BUSINESS NAME
         $fieldValidator = [ 'business_name' => 'required' ];
         $showPrompt = true;
@@ -203,20 +171,18 @@ class InvServicesTest extends Command
 
         $this->configService->setEnvironment(Config::$ENV_TEST);
         $this->configService->setInvoiceMode(Config::$MODE_ELEC);
-        $this->configService->setSystemCode($code);
-
-//        $configService->setOfficeCode(0);
-//        $configService->setOfficeAddress('18 de nobiembre');
-        $this->configService->setNit($nit);
         $this->configService->setBusinessName($businessName);
         $this->configService->setMunicipality($municipality);
         $this->configService->setOfficeCode(0);
         $this->configService->setOfficePhone($phone);
         $this->configService->setOfficeAddress($office_address);
+
+        //OTROS
+        $this->configService->setSectorDocumentCode(1);
         //server_time_diff, LAST_INVOICE_NUMBER
     }
 
-    private function readDelegateToken(){
+    private function readAndSetDelegateToken(){
         $tokenValidator = [ 'token' => 'required' ];
         $showPrompt = true;
         $dToken = null;
@@ -230,49 +196,25 @@ class InvServicesTest extends Command
                 $this->writeMessage("> Error: $errors", false, 'error');
                 continue;
             }
-            $this->delegatedToken = $dToken;
-            $showPrompt = false;
-
-//            try{
-//                list($header, $body) = explode('.', $dToken);
-//                $body = base64_decode($body);
-//                $data = json_decode($body);
-//                if($data->codigoSistema != config("siat_invoicing.system_code")){
-//                    $validator->errors()->add('token', "Codigo de sistema incorrecto para el token ingresado");
-//                    $errors = $validator->errors()->messages()['token'];
-//                    $errors = implode(', ', $errors);
-//                    $this->writeMessage("> Error: $errors", false, 'error');
-//                    continue;
-//                }
-//                $showPrompt = false;
-//                $this->delegatedToken = $dToken;
-//            }catch(\Exception $e){
-//                $validator->errors()->add('token', $e->getMessage());
-//                $errors = $validator->errors()->messages()['token'];
-//                $errors = implode(', ', $errors);
-//                $this->writeMessage("> Error: $errors", false, 'error');
-//            }
-        }
-        return $dToken;
-    }
-
-    private function readDateToken(){
-        $dateValidator = [ 'date' => 'required|date_format:Y-m-d' ];
-        $showPrompt = true;
-        $dtDate = null;
-        while($showPrompt){
-            $dtDate = $this->ask('Fecha límite (YYYY-MM-DD)');
-            $validator = Validator::make(['date' => $dtDate], $dateValidator);
-            if($validator->fails()){
-                $errors = $validator->errors()->messages()['date'];
+            try{
+                list($header, $body) = explode('.', $dToken);
+                $body = base64_decode($body);
+                $data = json_decode($body);
+                $systemCode = $data->codigoSistema;
+                $nit = $data->nitDelegado;
+                $expTime = $data->exp;
+                $expDate = Carbon::createFromTimestampUTC($expTime);
+                $this->configService->setNit($nit);
+                $this->configService->setSystemCode($systemCode);
+                $this->tokenService->addDelegateToken($dToken, $expDate);
+                $showPrompt = false;
+            }catch(\Exception $e){
+                $validator->errors()->add('token', $e->getMessage());
+                $errors = $validator->errors()->messages()['token'];
                 $errors = implode(', ', $errors);
                 $this->writeMessage("> Error: $errors", false, 'error');
-                continue;
             }
-            $showPrompt = false;
-            $this->dateToken = $dtDate;
         }
-        return $dtDate;
     }
 
     private function readPublicKey(){
@@ -320,17 +262,17 @@ class InvServicesTest extends Command
     }
 
     private function etapaVII($salePoint){
-        $testLimit = 125;
+
         $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint)", true, 'warning');
         // TODO: Tomar toda la lista de la etapa iv (mejorar esto)
         $forNullifyList = Invoice::all();
+        $testLimit = count($forNullifyList);
         $test = 1;
         foreach($forNullifyList as $invoice){
             try{
-                $service = new InvoicingService();
+                $service = app(InvoicingService::class);
                 $cancelReason = CancelReason::inRandomOrder()->first();
-                $service->cancelInvoice($invoice, $cancelReason);
-                $passed = true;
+                $passed = $service->cancelInvoice($salePoint, $invoice, $cancelReason, 1);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -340,53 +282,34 @@ class InvServicesTest extends Command
             $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
         }
     }
-    private function etapaVI(){
-        $testLimit = 10;
+    private function etapaVI($salePoint, $testLimit = 0){
         $this->writeMessage("Etapa VI: Consumo de metodos de emision de paquetes (punto de venta: $this->salePoint)", true, 'warning');
     }
-    private function etapaV(){
-        $testLimit = 5;
+    private function etapaV($salePoint, $testLimit = 0){
         $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $this->salePoint)", true, 'warning');
     }
 
-    private function etapaIV($salePoint){
-        $emissionDate = ConfigService::getTime();
-        $codeService = new CodeService();
+    private function etapaIV($salePoint, $testLimit = 0){
+        $invoicingService = app(InvoicingService::class);
         $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint)", true, 'warning');
-        $testLimit = 125;
-        $cuisModel = $codeService->getValidCuisModel();
         for($test = 1; $test<=$testLimit; $test++){
             try{
+                //Ejemplo de como generar factura
                 //GENERAR ARCHIVO XML
                 // - inicializar valores auxiliares
                 $faker = Faker::create('es_PE');
-                $newInvoiceNumber = ConfigService::getAvailableInvoiceNumber();
-                $cufdModel = $codeService->getValidCufdModel();
-                $sectorDocumentCode = 1; // TODO: Revisar
+
                 // - Generar cabecera
                 $invoiceHeader = new HeaderEInvoice();
-                $invoiceHeader->nitEmisor = Config::getNitConfig()->value;
-                $invoiceHeader->razonSocialEmisor = Config::getBusinessNameConfig()->value;
-                $invoiceHeader->municipio = Config::getMunicipalityConfig()->value;
-                $invoiceHeader->telefono = Config::getOfficePhoneConfig()->value;
-                $invoiceHeader->numeroFactura = $newInvoiceNumber;
-                //$invoiceHeader->cuf = 'ASDQW12';
-                $invoiceHeader->cufd = $cufdModel->cufd;
-                $invoiceHeader->codigoSucursal = Config::getOfficeCodeConfig()->value;
-                $invoiceHeader->direccion = Config::getOfficeAddressConfig()->value;
-                $invoiceHeader->fechaEmision = $emissionDate->format("Y-m-d\TH:i:s.v");
                 $invoiceHeader->nombreRazonSocial = $faker->name;
                 $typeDocument = IdentityDocType::where('descripcion', 'CI - CEDULA DE IDENTIDAD')->first();
                 $invoiceHeader->codigoTipoDocumentoIdentidad = $typeDocument? $typeDocument->codigo_clasificador: 0;
-                $document = [];
                 $invoiceHeader->numeroDocumento = $faker->randomNumber(8, true);
                 $hasComplement = rand(0,1) == 1;
-                $document[] = $invoiceHeader->numeroDocumento;
                 if($hasComplement){
                     $invoiceHeader->complemento = ($faker->randomLetter()).($faker->randomDigit());
-                    $document[] = $invoiceHeader->complemento;
                 }
-                $invoiceHeader->codigoCliente = $faker->randomNumber();
+                $invoiceHeader->codigoCliente = $faker->randomNumber();//TODO: Esto debe salir de otra tabla
                 $invoiceHeader->codigoMetodoPago = 1;
                 $invoiceHeader->montoTotal = 0.00;
                 $invoiceHeader->montoTotalSujetoIva = 0.00;
@@ -395,12 +318,10 @@ class InvServicesTest extends Command
                 $invoiceHeader->montoTotalMoneda = 0;
                 $invoiceHeader->montoGiftCard = 0;
                 $invoiceHeader->descuentoAdicional = 0.00;
-                $invoiceHeader->codigoExcepcion = 0;//para nit invalidos 0=>registro normal, 1=> se autoriza el registro
-                $invoiceHeader->leyenda = $faker->sentence(10);
+                $invoiceHeader->codigoExcepcion = 0;//TODO: para nit invalidos 0=>registro normal, 1=> se autoriza el registro
+                $invoiceHeader->leyenda = Legend::inRandomOrder()->first()->descripcion_leyenda;//TODO: Ver de sacar de otro lado
                 $invoiceHeader->usuario = $faker->regexify('[A-Z]{5}[0-4]{3}');
-                $invoiceHeader->codigoDocumentoSector = $sectorDocumentCode;
-                $invoiceHeader->generateCufCode($cufdModel);
-                $eInvoice = new EInvoice(config("siat_invoicing.main_schema"), $invoiceHeader);
+                $eInvoice = new EInvoice(config("pacf_invoicing.main_schema"), $invoiceHeader);
                 for($i=0;$i<$faker->numberBetween(1, 3); $i++){
                     //TODO check
                     $detail = new DetailEInvoice();
@@ -419,39 +340,9 @@ class InvServicesTest extends Command
                     $detail->numeroImei = 0.0;
                     $eInvoice->addDetail($detail);
                 }
-
-                // FIRMAR XML
-                $signer = new XmlSigner();
-                $signedXml = $signer->sign($eInvoice->toXml()->saveXML());
-
-                $model = new Invoice();
-                $model->number = $newInvoiceNumber;
-                $model->cuf = $invoiceHeader->cuf;
-                $model->document = implode("-", $document);
-                $model->client_name = $invoiceHeader->razonSocialEmisor;
-                $model->emission_date = $emissionDate;
-                $model->amount = $eInvoice->header->montoTotal;
-                $model->content = $signedXml;
-                $model->user_id = $faker->randomNumber();
-                $model->save();
-                $model->refresh();
-                $content = stream_get_contents($model->content);
-                // VALIDAR CON XSD
-                $xmlValidator = new XmlValidator($content);
-                $xmlValidator->validate();
-//                dd(libxml_get_errors());
-                // COMPRIMIR ZIP
-                $compressed = gzencode($content);
-                //$b64 = base64_encode($compressed);
-
-                // OBTENER HASH
-                $hash = hash('sha256', $compressed);
-
-                //SEND PACKAGE
-                $request = new RecepcionFacturaRequest($sectorDocumentCode, 1, $cufdModel->cufd, $cuisModel->cuis, 1, $compressed, $hash);
-                $service = new InvoicingService();
-                $service->sendInvoice($request);
-                $passed = true;
+                //=>emision en linea = 1
+                //1=>factura con derecho a credito fiscal
+                $passed = $invoicingService->sendElectronicInvoice($salePoint, $eInvoice, 1,1);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -462,14 +353,13 @@ class InvServicesTest extends Command
         }
     }
 
-    private function etapaIII(int $salePoint){
-        $codeService = new CodeService();
+    private function etapaIII(int $salePoint, $testLimit = 0){
+        $codeService = app(CodeService::class);
         $this->writeMessage("Etapa III: Obtencion CUFD (punto de venta: $salePoint)", true, 'warning');
-        $testLimit = 1;
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $codeService->getCufdCode(true);
-                $passed = true;
+                $cufd = $codeService->getCufdCode($salePoint, true);
+                $passed = $cufd!=null;
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -480,15 +370,13 @@ class InvServicesTest extends Command
         }
     }
 
-    private function etapaII($salePoint){
-        $catalogService = new CatalogService();
+    private function etapaII($salePoint, $testLimit = 0){
+        $catalogService = app(CatalogService::class);
         $this->writeMessage("Etapa II: Sincronizacion de catalogos (punto de venta: $salePoint)", true, 'warning');
-        $testLimit = 1;//para todos los casos
         $this->writeMessage("* 01 LISTADO TOTAL DE ACTIVIDADES *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncActividades();
-                $passed = true;
+                $passed = $catalogService->syncActividades($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -498,13 +386,10 @@ class InvServicesTest extends Command
             $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
         }
 
-        //TODO: Ver como hacer
         $this->writeMessage("* 02 FECHA Y HORA ACTUAL *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
-
             try{
-                $catalogService->syncFechaHora();
-                $passed = true;
+                $passed = $catalogService->syncFechaHora($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -517,8 +402,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 03 LISTADO TOTAL DE ACTIVIDADES DOCUMENTO SECTOR *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncActividadesDocumentosSector();
-                $passed = true;
+                $passed = $catalogService->syncActividadesDocumentosSector($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -531,8 +415,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 04 LISTADO TOTAL DE LEYENDAS DE FACTURAS", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncLeyendas();
-                $passed = true;
+                $passed = $catalogService->syncLeyendas($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -545,8 +428,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 05 LISTADO TOTAL DE MENSAJES DE SERVICIOS *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncMensajes();
-                $passed = true;
+                $passed = $catalogService->syncMensajes($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -559,8 +441,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 06 LISTADO TOTAL DE PRODUCTOS Y SERVICIOS *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncProductos();
-                $passed = true;
+                $passed = $catalogService->syncProductos($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -573,8 +454,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 07 LISTADO TOTAL DE EVENTOS SIGNIFICATIVOS *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncEventosSignificativos();
-                $passed = true;
+                $passed = $catalogService->syncEventosSignificativos($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -586,8 +466,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 08 LISTADO TOTAL DE MOTIVOS DE ANULACION *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncMotivosAnulacion();
-                $passed = true;
+                $passed = $catalogService->syncMotivosAnulacion($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -599,8 +478,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 09 LISTADO TOTAL DE PAISES *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncPaises();
-                $passed = true;
+                $passed = $catalogService->syncPaises($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -612,8 +490,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 10 LISTADO TOTAL DE TIPOS DE DOCUMENTO DE IDENTIDAD *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposDocumentoIdentidad();
-                $passed = true;
+                $passed = $catalogService->syncTiposDocumentoIdentidad($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -625,8 +502,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 11 LISTADO TOTAL DE TIPOS DE DOCUMENTO SECTOR *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposDocumentoSector();
-                $passed = true;
+                $passed = $catalogService->syncTiposDocumentoSector($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -638,8 +514,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 12 LISTADO TOTAL DE TIPOS DE EMISION *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposEmision();
-                $passed = true;
+                $passed = $catalogService->syncTiposEmision($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -652,8 +527,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 13 LISTADO TOTAL DE TIPO HABITACION *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposHabitacion();
-                $passed = true;
+                $passed = $catalogService->syncTiposHabitacion($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -666,8 +540,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 14 LISTADO TOTAL DE METODO DE PAGO *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposMetodoPago();
-                $passed = true;
+                $passed = $catalogService->syncTiposMetodoPago($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -680,8 +553,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 15 LISTADO TOTAL DE TIPOS DE MONEDA *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposMoneda();
-                $passed = true;
+                $passed = $catalogService->syncTiposMoneda($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -694,8 +566,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 16 LISTADO TOTAL DE TIPOS DE PUNTO DE VENTA *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposPuntoVenta();
-                $passed = true;
+                $passed = $catalogService->syncTiposPuntoVenta($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -707,8 +578,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 17 LISTADO TOTAL DE TIPOS DE FACTURA *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncTiposFactura();
-                $passed = true;
+                $passed = $catalogService->syncTiposFactura($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -721,8 +591,7 @@ class InvServicesTest extends Command
         $this->writeMessage("* 18 LISTADO TOTAL DE UNIDAD DE MEDIDA *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $catalogService->syncUnidadesMedida();
-                $passed = true;
+                $passed = $catalogService->syncUnidadesMedida($salePoint);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -733,14 +602,13 @@ class InvServicesTest extends Command
         }
     }
 
-    private function etapaI($salePoint){
+    private function etapaI($salePoint, $testLimit = 0){
         $codeService = app(CodeService::class);
         $this->writeMessage("Etapa I: Obtencion de CUIS (punto de venta: $salePoint)", true, 'warning');
-        $testLimit = 1;
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $codeService->getCuisCode($salePoint, true);
-                $passed = true;
+                $cuis = $codeService->getCuisCode($salePoint, true);
+                $passed = $cuis!=null;
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;

@@ -9,18 +9,13 @@ class ListaActividadesResponse extends BaseResponse
     public $items = [];
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaListaActividades', []);
+        $data = $response->RespuestaListaActividades ?? (object)[];
         $object = new ListaActividadesResponse();
-        $object->buildBase($resp);
+        $object->buildBase($data);
 
         $items = [];
-        foreach (Arr::get($resp, 'listaActividades', [] ) as $item){
-            $items[] = new Actividad(
-                Arr::get($item, 'codigoCaeb', ""),
-                Arr::get($item, 'descripcion', ""),
-                Arr::get($item, 'tipoActividad', ""),
-            );
+        foreach ($data->listaActividades?? [] as $item){
+            $items[] = new Actividad($item->codigoCaeb??'', $item->descripcion??'', $item->tipoActividad??'');
         }
         $object->items = $items;
         return $object;

@@ -8,19 +8,15 @@ class CufdResponse extends BaseResponse
 {
     public $codigo = "";
     public $codigoControl = "";
-    public $direccion = "";
     public $fechaVigencia = "";
 
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'RespuestaCufd', []);
+        $data = $response->RespuestaCufd ?? (object)[];
         $object = new CufdResponse();
-        $object->buildBase($resp);
-        $object->codigo = Arr::get($resp, 'codigo', "");
-        $object->codigoControl = Arr::get($resp, 'codigoControl', "");
-        $object->direccion = Arr::get($resp, 'direccion', "");
-        $fechaVigencia = Arr::get($resp, 'fechaVigencia', '');
-        $object->fechaVigencia = strlen($fechaVigencia)>0? new Carbon($fechaVigencia): null;
+        $object->buildBase($data);
+        $object->codigo = $data->codigo??'';
+        $object->codigoControl = $data->codigoControl??'';
+        $object->fechaVigencia = isset($data->fechaVigencia)? new Carbon($data->fechaVigencia): null;
         return $object;
     }
 }

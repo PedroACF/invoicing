@@ -8,7 +8,7 @@ use PedroACF\Invoicing\Models\SYS\DelegateToken;
 
 class TokenService
 {
-    public function addDelegateToken(string $token, string $expiredDate){
+    public function addDelegateToken(string $token, Carbon $expiredDate){
         DelegateToken::where('activo', true)->update(['activo'=> false]);
         $newToken = new DelegateToken();
         $newToken->token = $token;
