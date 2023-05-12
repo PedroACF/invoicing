@@ -1,6 +1,7 @@
 <?php
 
 namespace PedroACF\Invoicing\Repositories;
+use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
 use PedroACF\Invoicing\Responses\Operation\OperationComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
@@ -9,8 +10,10 @@ class OperationRepository
     protected $client;
     public function __construct()
     {
-        $wsdl = config("siat_invoicing.endpoints.operaciones");
-        $this->client = app()->call('SoapRepository@getClient', $wsdl);
+        $wsdl = config("pacf_invoicing.endpoints.operaciones");
+        $this->client = app()->call(function(SoapRepository $soap) use ($wsdl){
+            return $soap->getClient($wsdl);
+        });
     }
 
     //cierreOperacionesSistema
@@ -34,8 +37,10 @@ class OperationRepository
     }
 
     //registroEventoSignificativo
-    public function addSignificantEvent(){
-        $response = $this->client->registroEventoSignificativo();
+    public function addSignificantEvent(EventoSignificativoRequest $request){
+        dump($request->toArray());
+        $response = $this->client->registroEventoSignificativo($request->toArray());
+        dd($response);
     }
 
     //registroPuntoVenta

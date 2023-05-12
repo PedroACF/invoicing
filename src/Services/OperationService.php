@@ -21,12 +21,16 @@ use PedroACF\Invoicing\Models\SIN\SectorDocType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SIN\SourceCountry;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
+use PedroACF\Invoicing\Repositories\OperationRepository;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
+use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
 
 class OperationService
 {
-    public function __construct()
+    private $opeRepo;
+    public function __construct(OperationRepository $opeRepo)
     {
+        $this->opeRepo = $opeRepo;
     }
 
     public function closeOperations(){
@@ -45,8 +49,21 @@ class OperationService
 
     }
 
-    public function addSignificantEvent(){
-
+    public function addSignificantEvent($salePoint, $cufd): bool{
+        $conn = $this->opeRepo->checkConnection();
+        if($conn->transaccion){
+            $request = new EventoSignificativoRequest(
+                $salePoint,
+                1,
+                'descripcion',
+                $cufd,
+                Carbon::now()->subDay(),
+                Carbon::now()
+            );
+            $this->opeRepo->addSignificantEvent($request);
+            return true;
+        }
+        return false;
     }
 
     public function checkSignificantEvent(){

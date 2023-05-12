@@ -7,10 +7,9 @@ use Illuminate\Support\Arr;
 class OperationComunicacionResponse extends BaseResponse
 {
     public static function build($response){
-        $array = json_decode(json_encode($response), true);
-        $resp = Arr::get($array, 'return', []);
+        $data = $response->return ?? (object)[];
         $object = new OperationComunicacionResponse();
-        $object->buildBase($resp);
+        $object->buildBase($data);
         return $object;
     }
 }

@@ -6,6 +6,7 @@ use PedroACF\Invoicing\Commands\InvCheckSignature;
 use PedroACF\Invoicing\Commands\InvServicesTest;
 use PedroACF\Invoicing\Repositories\CodeRepository;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
+use PedroACF\Invoicing\Repositories\OperationRepository;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
 use PedroACF\Invoicing\Repositories\SoapRepository;
 use PedroACF\Invoicing\Services\CatalogService;
@@ -13,6 +14,7 @@ use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
+use PedroACF\Invoicing\Services\OperationService;
 use PedroACF\Invoicing\Services\TokenService;
 use PedroACF\Invoicing\Utils\XmlSigner;
 
@@ -54,6 +56,9 @@ class InvoicingServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseSaleRepository::class, function(Application $app){
             return new PurchaseSaleRepository();
         });
+        $this->app->bind(OperationRepository::class, function(){
+            return new OperationRepository();
+        });
 
         //Services
         $this->app->bind(CodeService::class, function(Application $app){
@@ -71,6 +76,11 @@ class InvoicingServiceProvider extends ServiceProvider
                 $app->make(PurchaseSaleRepository::class),
                 $app->make(ConfigService::class),
                 $app->make(CodeService::class)
+            );
+        });
+        $this->app->bind(OperationService::class, function(Application $app){
+            return new OperationService(
+                $app->make(OperationRepository::class)
             );
         });
 //        $this->app->singleton(ConfigService::class, function(Application $app){

@@ -21,6 +21,7 @@ use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
+use PedroACF\Invoicing\Services\OperationService;
 use PedroACF\Invoicing\Services\TokenService;
 use PedroACF\Invoicing\Utils\XmlSigner;
 use PedroACF\Invoicing\Utils\XmlValidator;
@@ -82,7 +83,7 @@ class InvServicesTest extends Command
         $this->etapaII($salePoint, 1);
         $this->etapaIII($salePoint, 1);
         $this->etapaIV($salePoint, 1);
-//            $this->etapaV();
+        $this->etapaV($salePoint, 1);
 //            $this->etapaVI();
         $this->etapaVII($salePoint);
 
@@ -284,9 +285,23 @@ class InvServicesTest extends Command
     }
     private function etapaVI($salePoint, $testLimit = 0){
         $this->writeMessage("Etapa VI: Consumo de metodos de emision de paquetes (punto de venta: $this->salePoint)", true, 'warning');
+
     }
     private function etapaV($salePoint, $testLimit = 0){
-        $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $this->salePoint)", true, 'warning');
+        $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint)", true, 'warning');
+        for($test=1; $test<=$testLimit; $test++){
+            try{
+                $service = app(OperationService::class);
+                $code = app(CodeService::class);
+                $passed = $service->addSignificantEvent($salePoint, $code->getCufdCode($salePoint));
+            }catch (\Exception $e){
+                dump($e);
+                $passed = false;
+            }
+            $number = str_pad($test++, 3, "0", STR_PAD_LEFT);
+            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
+            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+        }
     }
 
     private function etapaIV($salePoint, $testLimit = 0){
