@@ -20,6 +20,7 @@ use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SectorDocType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SIN\SourceCountry;
+use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
 use PedroACF\Invoicing\Repositories\OperationRepository;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
@@ -49,18 +50,25 @@ class OperationService
 
     }
 
-    public function addSignificantEvent($salePoint, $cufd): bool{
+    public function addSignificantEvent($salePoint, SignificantEvent $event): bool{
         $conn = $this->opeRepo->checkConnection();
         if($conn->transaccion){
+            $start = new Carbon($event->start_datetime);
+            $end = Carbon::now();
+            $end->subHours(1);
+            $event->end_datetime = $end;
+            $event->save();
             $request = new EventoSignificativoRequest(
                 $salePoint,
-                1,
-                'descripcion',
-                $cufd,
-                Carbon::now()->subDay(),
-                Carbon::now()
+                $event->event_code,
+                $event->description,
+                $event->event_cufd,
+                $start,
+                $end
             );
-            $this->opeRepo->addSignificantEvent($request);
+            dump($request);
+            $response = $this->opeRepo->addSignificantEvent($request);
+            dump($response);
             return true;
         }
         return false;

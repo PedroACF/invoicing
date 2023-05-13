@@ -13,8 +13,10 @@ use PedroACF\Invoicing\Models\SIN\CancelReason;
 use PedroACF\Invoicing\Models\SIN\IdentityDocType;
 use PedroACF\Invoicing\Models\SIN\Legend;
 use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
@@ -289,15 +291,36 @@ class InvServicesTest extends Command
     }
     private function etapaV($salePoint, $testLimit = 0){
         $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint)", true, 'warning');
-        for($test=1; $test<=$testLimit; $test++){
+        $codeService = app(CodeService::class);
+
+        $eventTypes = SignificantEventType::all();
+        $test = 1;
+        $faker = Faker::create('es_PE');
+        $now = Carbon::now();
+        $now->subDays(1);
+        foreach($eventTypes as $eventType){
+            if($test>$testLimit){
+                break;
+            }
+            //Revisar CUFD
+            $event = new SignificantEvent();
+            $event->event_code = $eventType->codigo_clasificador;
+            $event->description = $faker->regexify('[A-Z]{5}[0-4]{3}');
+            $event->event_cufd = $codeService->getCufdCode($salePoint);
+            $event->start_datetime = $now;
+            $event->sale_point = $salePoint;
+            $event->save();
+        }
+        $events = SignificantEvent::whereNull("end_datetime")->where('sale_point', $salePoint)->get();
+        foreach($events as $event){
             try{
                 $service = app(OperationService::class);
-                $code = app(CodeService::class);
-                $passed = $service->addSignificantEvent($salePoint, $code->getCufdCode($salePoint));
+                $passed = $service->addSignificantEvent($salePoint, $event);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
             }
+
             $number = str_pad($test++, 3, "0", STR_PAD_LEFT);
             $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
             $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');

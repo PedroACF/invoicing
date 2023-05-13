@@ -25,6 +25,10 @@ class EventoSignificativoRequest extends BaseRequest{
     {
         $config = app(ConfigService::class);
         $code = app(CodeService::class);
+        //Forzar nuevo cufd para pruebas
+        //TODO: Arreglar
+        $cufd = $code->getCufdCode($salePoint, true);
+
         $this->requestName = "SolicitudEventoSignificativo";
         $this->codigoAmbiente = $config->getEnvironment();
         $this->codigoPuntoVenta = $salePoint;
@@ -38,7 +42,7 @@ class EventoSignificativoRequest extends BaseRequest{
         $this->descripcion = $description;
         $this->cufdEvento = $cufdEvent;
         //TODO: Probando
-        $this->cufd = $code->getCufdCode($salePoint);
+        $this->cufd = $cufd;
         $this->fechaHoraInicioEvento = $startDate->format("Y-m-d\TH:i:s.v");
         $this->fechaHoraFinEvento = $endDate->format("Y-m-d\TH:i:s.v");
     }

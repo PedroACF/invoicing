@@ -2,6 +2,7 @@
 
 namespace PedroACF\Invoicing\Repositories;
 use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
+use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
 use PedroACF\Invoicing\Responses\Operation\OperationComunicacionResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
@@ -37,10 +38,9 @@ class OperationRepository
     }
 
     //registroEventoSignificativo
-    public function addSignificantEvent(EventoSignificativoRequest $request){
-        dump($request->toArray());
+    public function addSignificantEvent(EventoSignificativoRequest $request): ListaEventosResponse{
         $response = $this->client->registroEventoSignificativo($request->toArray());
-        dd($response);
+        return ListaEventosResponse::build($response);
     }
 
     //registroPuntoVenta
