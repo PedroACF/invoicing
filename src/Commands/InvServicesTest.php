@@ -86,9 +86,9 @@ class InvServicesTest extends Command
         $this->etapaII($salePoint, 1);
         $this->etapaIII($salePoint, 1);
         $this->etapaIV($salePoint, 1);
-        //$this->etapaV($salePoint, 1);
+        $this->etapaV_VI($salePoint, 1);
 //            $this->etapaVI();
-        $this->etapaVII($salePoint);
+        //$this->etapaVII($salePoint);
 
     }
 
@@ -288,39 +288,28 @@ class InvServicesTest extends Command
         $this->writeMessage("Etapa VI: Consumo de metodos de emision de paquetes (punto de venta: $this->salePoint)", true, 'warning');
 
     }
-    private function etapaV(SalePoint $salePoint, $testLimit = 0){
+    private function etapaV_VI(SalePoint $salePoint, $testLimit = 0){
         $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint->sin_code)", true, 'warning');
         $codeService = app(CodeService::class);
-
         $eventTypes = SignificantEventType::all();
         $test = 1;
         $faker = Faker::create('es_PE');
-        $now = Carbon::now();
-        $now->subDays(1);
         foreach($eventTypes as $eventType){
             if($test>$testLimit){
                 break;
             }
-            //Revisar CUFD
-            $event = new SignificantEvent();
-            $event->event_code = $eventType->codigo_clasificador;
-            $event->description = $faker->regexify('[A-Z]{5}[0-4]{3}');
-            $event->event_cufd = $codeService->getCufdCode($salePoint);
-            $event->start_datetime = $now;
-            $event->sale_point = $salePoint;
-            $event->save();
-        }
-        $events = SignificantEvent::whereNull("end_datetime")->where('sale_point', $salePoint)->get();
-        foreach($events as $event){
             try{
+                //crear event
                 $service = app(OperationService::class);
-                $passed = $service->addSignificantEvent($salePoint, $event);
+                $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
+                $cufd = $codeService->getCufdModel($salePoint, true);//Solo forzar para pruebas
+                $closedEvent = $service->closeSignificantEvent($event, $cufd);
+                $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
             }
-
-            $this->write($test, $testLimit, $passed);
+            $this->write($test++, $testLimit, $passed);
         }
     }
 

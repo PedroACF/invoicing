@@ -23,7 +23,7 @@ class CreateSignificantEventsTable extends Migration
             $table->string('cafc')->nullable();// ==>=>=>=>=>=>>=
             $table->dateTime('start_datetime');
             $table->dateTime('end_datetime')->nullable();
-            //ESTADO?????????????
+            $table->string('state')->default('ACTIVE');
             $table->integer('sale_point')->default(0);
             $table->timestamps();
         });

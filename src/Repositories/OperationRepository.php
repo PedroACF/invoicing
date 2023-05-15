@@ -40,6 +40,7 @@ class OperationRepository
     //registroEventoSignificativo
     public function addSignificantEvent(EventoSignificativoRequest $request): ListaEventosResponse{
         $response = $this->client->registroEventoSignificativo($request->toArray());
+        dump($response);
         return ListaEventosResponse::build($response);
     }
 

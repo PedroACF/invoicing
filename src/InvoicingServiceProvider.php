@@ -82,7 +82,9 @@ class InvoicingServiceProvider extends ServiceProvider
         });
         $this->app->bind(OperationService::class, function(Application $app){
             return new OperationService(
-                $app->make(OperationRepository::class)
+                $app->make(OperationRepository::class),
+                $app->make(ConfigService::class),
+                $app->make(CodeService::class)
             );
         });
 //        $this->app->singleton(ConfigService::class, function(Application $app){

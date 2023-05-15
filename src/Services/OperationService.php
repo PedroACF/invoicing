@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use PedroACF\Invoicing\Models\SIN\Activity;
 use PedroACF\Invoicing\Models\SIN\ActivityDocSector;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SIN\Cufd;
 use PedroACF\Invoicing\Models\SIN\CurrencyType;
 use PedroACF\Invoicing\Models\SIN\EmissionType;
 use PedroACF\Invoicing\Models\SIN\IdentityDocType;
@@ -20,6 +21,7 @@ use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SectorDocType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SIN\SourceCountry;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
 use PedroACF\Invoicing\Repositories\OperationRepository;
@@ -29,9 +31,13 @@ use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
 class OperationService
 {
     private $opeRepo;
-    public function __construct(OperationRepository $opeRepo)
+    private $configService;
+    private $codeService;
+    public function __construct(OperationRepository $opeRepo, ConfigService $configService, CodeService $codeService)
     {
         $this->opeRepo = $opeRepo;
+        $this->configService = $configService;
+        $this->codeService = $codeService;
     }
 
     public function closeOperations(){
@@ -50,25 +56,19 @@ class OperationService
 
     }
 
-    public function addSignificantEvent($salePoint, SignificantEvent $event): bool{
+    public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event): bool{
         $conn = $this->opeRepo->checkConnection();
         if($conn->transaccion){
             $start = new Carbon($event->start_datetime);
-            $end = Carbon::now();
-            $end->subHours(1);
-            $event->end_datetime = $end;
-            $event->save();
+            $end = new Carbon($event->end_datetime);
             $request = new EventoSignificativoRequest(
                 $salePoint,
-                $event->event_code,
-                $event->description,
-                $event->event_cufd,
-                $start,
-                $end
+                $event
             );
-            dump($request);
             $response = $this->opeRepo->addSignificantEvent($request);
             dump($response);
+            $event->state = 'CLOSED';
+            $event->save();
             return true;
         }
         return false;
@@ -76,6 +76,28 @@ class OperationService
 
     public function checkSignificantEvent(){
 
+    }
+
+    public function createSignificantEvent(SalePoint $salePoint, SignificantEventType $eventType, string $description): SignificantEvent{
+        $event = new SignificantEvent();
+        $event->event_code = $eventType->codigo_clasificador;
+        $event->description = $description;
+        //$event->reception_code = '';
+        //$event->cafc = '';
+        $cufdModel = $this->codeService->getActiveCufdModel($salePoint);//Sin considerar que esta fuera de plazo
+        $event->event_cufd = $cufdModel->code;
+        $event->start_datetime = $this->configService->getTime();
+        $event->sale_point = $salePoint->sin_code;
+        $event->save();
+        return $event;
+    }
+
+    public function closeSignificantEvent(SignificantEvent $event, Cufd $cufd): SignificantEvent{
+        $event->cufd = $cufd->code;
+        $event->end_datetime = $this->configService->getTime();
+        $event->state = 'CLOSING';
+        $event->save();
+        return $event;
     }
 
 }

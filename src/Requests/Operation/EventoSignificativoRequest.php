@@ -2,6 +2,8 @@
 namespace PedroACF\Invoicing\Requests\Operation;
 use Carbon\Carbon;
 use PedroACF\Invoicing\Models\SYS\Config;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
+use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
@@ -21,29 +23,27 @@ class EventoSignificativoRequest extends BaseRequest{
     public $fechaHoraInicioEvento = null;
     public $fechaHoraFinEvento = null;
 
-    public function __construct(int $salePoint, int $eventTypeCode, string $description, string $cufdEvent, Carbon $startDate, Carbon $endDate)
+    public function __construct(SalePoint $salePoint, SignificantEvent $event)
     {
         $config = app(ConfigService::class);
-        $code = app(CodeService::class);
-        //Forzar nuevo cufd para pruebas
-        //TODO: Arreglar
-        $cufd = $code->getCufdCode($salePoint, true);
 
         $this->requestName = "SolicitudEventoSignificativo";
         $this->codigoAmbiente = $config->getEnvironment();
-        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoPuntoVenta = $salePoint->sin_code;
         $this->codigoSistema = $config->getSystemCode();
         $this->codigoSucursal = $config->getOfficeCode();
-        $this->cuis = $code->getCuisCode($salePoint);
+        $this->cuis = $salePoint->active_cuis;
         $this->nit = $config->getNit();
 
         //cositas
-        $this->codigoMotivoEvento = $eventTypeCode;
-        $this->descripcion = $description;
-        $this->cufdEvento = $cufdEvent;
+        $this->codigoMotivoEvento = $event->event_code;
+        $this->descripcion = $event->description;
+        $this->cufdEvento = $event->event_cufd;
         //TODO: Probando
-        $this->cufd = $cufd;
-        $this->fechaHoraInicioEvento = $startDate->format("Y-m-d\TH:i:s.v");
-        $this->fechaHoraFinEvento = $endDate->format("Y-m-d\TH:i:s.v");
+        $this->cufd = $event->cufd;
+        $start = new Carbon($event->start_datetime);
+        $end = new Carbon($event->end_datetime);
+        $this->fechaHoraInicioEvento = $start->format("Y-m-d\TH:i:s.v");
+        $this->fechaHoraFinEvento = $end->format("Y-m-d\TH:i:s.v");
     }
 }
