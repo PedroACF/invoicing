@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 
 class ListaEventosResponse extends BaseResponse
 {
-    private $codigoRecepcionEventoSignificativo = '';
+    public $codigoRecepcionEventoSignificativo = '';
     public static function build($response){
         $data = $response->RespuestaListaEventos ?? (object)[];
         $object = new ListaEventosResponse();
