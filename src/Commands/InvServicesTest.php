@@ -181,7 +181,7 @@ class InvServicesTest extends Command
         $this->configService->setOfficePhone($phone);
         $this->configService->setOfficeAddress($office_address);
 
-        //OTROS
+        //OTROS para seguir
         $this->configService->setSectorDocumentCode(1);
         //server_time_diff, LAST_INVOICE_NUMBER
     }
