@@ -15,9 +15,9 @@ class CreateCuisTable extends Migration
     {
         Schema::create('sin_cuis', function (Blueprint $table) {
             $table->id();
-            $table->text('cuis');
+            $table->text('code');
             $table->dateTime('expired_date');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->integer('sale_point')->default(0);
             $table->timestamps();
         });

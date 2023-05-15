@@ -16,7 +16,7 @@ class CreateMessagesTable extends Migration
         Schema::create('sin_messages', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

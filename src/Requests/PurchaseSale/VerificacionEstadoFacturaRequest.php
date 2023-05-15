@@ -34,7 +34,7 @@ class VerificacionEstadoFacturaRequest extends BaseRequest
         $this->codigoPuntoVenta = $currentConfig->sale_point;
         $this->codigoSistema = config("siat_invoicing.system_code");
         $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
-        $this->cufd = $codeService->getCufdCode();
+        $this->cufd = $codeService->getCufdModel();
         $this->cuis = $codeService->getCuisCode();
         $this->nit = Config::getNitConfig()->value;
 

@@ -16,7 +16,7 @@ class CreateCancelReasonsTable extends Migration
         Schema::create('sin_cancel_reasons', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

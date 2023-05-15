@@ -16,7 +16,7 @@ class CreateEmissionTypesTable extends Migration
         Schema::create('sin_emission_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

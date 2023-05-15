@@ -62,13 +62,15 @@ class InvoicingServiceProvider extends ServiceProvider
 
         //Services
         $this->app->bind(CodeService::class, function(Application $app){
-            return new CodeService($app->make(CodeRepository::class));
+            return new CodeService(
+                $app->make(CodeRepository::class),
+                $app->make(ConfigService::class)
+            );
         });
         $this->app->bind(CatalogService::class, function(Application $app){
             return new CatalogService(
                 $app->make(DataSyncRepository::class),
-                $app->make(ConfigService::class),
-                $app->make(CodeService::class)
+                $app->make(ConfigService::class)
             );
         });
         $this->app->bind(InvoicingService::class, function(Application $app){

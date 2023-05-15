@@ -2,6 +2,7 @@
 namespace PedroACF\Invoicing\Requests\PurchaseSale;
 use Carbon\Carbon;
 use PedroACF\Invoicing\Models\SYS\Config;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
@@ -23,19 +24,20 @@ class AnulacionFacturaRequest extends BaseRequest
     public $cuf = 0;
 
 
-    public function __construct($salePoint, $sectorDocumentCode, $emissionCode, $cufd, $cuis, $invoiceType, $reasonCode, $cuf)
+    public function __construct(SalePoint $salePoint, $sectorDocumentCode, $emissionCode, $invoiceType, $reasonCode, $cuf)
     {
         $config = app(ConfigService::class);
+        $cufd = $salePoint->cufdCodes()->where('state','ACTIVE')->first();
         $this->requestName = "SolicitudServicioAnulacionFactura";
         $this->codigoAmbiente = $config->getEnvironment();
         $this->codigoDocumentoSector = $sectorDocumentCode; // TODO: DE LA BD?
         $this->codigoEmision = $emissionCode; //TODO: Verificar
         $this->codigoModalidad = $config->getInvoiceMode();
-        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoPuntoVenta = $salePoint->sin_code;
         $this->codigoSistema = $config->getSystemCode();
         $this->codigoSucursal = $config->getOfficeCode();
-        $this->cufd = $cufd;
-        $this->cuis = $cuis;
+        $this->cufd = $cufd->code;
+        $this->cuis = $salePoint->active_cuis;
         $this->nit = $config->getNit();
 
         $this->tipoFacturaDocumento = $invoiceType;

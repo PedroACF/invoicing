@@ -10,6 +10,7 @@ class FechaHoraResponse extends BaseResponse
     public $date;
 
     public static function build($response){
+        //dump($response);
         $data = $response->RespuestaFechaHora ?? (object)[];
         $object = new FechaHoraResponse();
         $object->buildBase($data);

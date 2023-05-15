@@ -15,10 +15,10 @@ class CreateCufdTable extends Migration
     {
         Schema::create('sin_cufd', function (Blueprint $table) {
             $table->id();
-            $table->text('cufd');
+            $table->text('code');
             $table->string('codigo_control');
             $table->dateTime('expired_date');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->integer('sale_point')->default(0);
             $table->timestamps();
         });

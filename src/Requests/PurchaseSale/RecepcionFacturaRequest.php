@@ -2,6 +2,7 @@
 namespace PedroACF\Invoicing\Requests\PurchaseSale;
 use Carbon\Carbon;
 use PedroACF\Invoicing\Models\SYS\Config;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
@@ -24,8 +25,9 @@ class RecepcionFacturaRequest extends BaseRequest
     public $hashArchivo = '';
 
 
-    public function __construct($salePoint, $emissionCode, $cufd, $cuis, $invoiceType, $file, $hash)
+    public function __construct(SalePoint $salePoint, $emissionCode, $invoiceType, $file, $hash)
     {
+        $cufd = $salePoint->cufdCodes()->where('state','ACTIVE')->first();
         $config = app(ConfigService::class);
         //$config = new ConfigService();
         $this->requestName = "SolicitudServicioRecepcionFactura";
@@ -33,11 +35,11 @@ class RecepcionFacturaRequest extends BaseRequest
         $this->codigoDocumentoSector = $config->getSectorDocumentCode();
         $this->codigoEmision = $emissionCode; //TODO: Verificar
         $this->codigoModalidad = $config->getInvoiceMode();
-        $this->codigoPuntoVenta = $salePoint;
+        $this->codigoPuntoVenta = $salePoint->sin_code;
         $this->codigoSistema = $config->getSystemCode();
         $this->codigoSucursal = $config->getOfficeCode();
-        $this->cufd = $cufd;
-        $this->cuis = $cuis;
+        $this->cufd = $cufd->code;
+        $this->cuis = $salePoint->active_cuis;
         $this->nit = $config->getNit();
 
         $this->tipoFacturaDocumento = $invoiceType;

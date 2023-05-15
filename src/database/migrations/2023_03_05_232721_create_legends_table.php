@@ -17,7 +17,7 @@ class CreateLegendsTable extends Migration
             $table->id();
             $table->string('codigo_actividad');
             $table->text('descripcion_leyenda');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

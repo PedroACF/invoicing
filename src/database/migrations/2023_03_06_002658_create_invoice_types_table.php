@@ -16,7 +16,7 @@ class CreateInvoiceTypesTable extends Migration
         Schema::create('sin_invoice_types', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

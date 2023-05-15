@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->string('codigo_producto');
             $table->string('codigo_actividad');
             $table->text('descripcion_producto');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ class CreateMeasurementTable extends Migration
         Schema::create('sin_measurement', function (Blueprint $table) {
             $table->string('codigo_clasificador')->primary();
             $table->text('descripcion');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

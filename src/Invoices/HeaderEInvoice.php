@@ -3,6 +3,7 @@ namespace PedroACF\Invoicing\Invoices;
 
 use Brick\Math\BigInteger;
 use PedroACF\Invoicing\Models\SIN\Cufd;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Services\ConfigService;
 
 class HeaderEInvoice extends BaseHeaderInvoice
@@ -38,8 +39,8 @@ class HeaderEInvoice extends BaseHeaderInvoice
     public $usuario; //pperez
     public $codigoDocumentoSector; //1
 
-    public function generateCufCode(Cufd $cufdModel, $salePoint){
-
+    public function generateCufCode(SalePoint $salePoint){
+        $cufd = $salePoint->cufdCodes()->where('state', 'ACTIVE')->first();
         $nit = str_pad($this->nitEmisor, 13, "0", STR_PAD_LEFT);
         $date = str_replace(["-","T",":","."], "", $this->fechaEmision);
         $office = str_pad($this->codigoSucursal, 4, "0", STR_PAD_LEFT);
@@ -48,13 +49,13 @@ class HeaderEInvoice extends BaseHeaderInvoice
         $invoiceType = 1;//SACAR DE LA BD
         $sectorType = str_pad(1, 2, "0", STR_PAD_LEFT);//SACAR DE LA BD
         $invoiceNumber = str_pad($this->numeroFactura, 10, "0", STR_PAD_LEFT);
-        $salePoint = str_pad($salePoint, 4, "0", STR_PAD_LEFT);
+        $salePoint = str_pad($salePoint->sin_code, 4, "0", STR_PAD_LEFT);
 
         $cuf = $nit.$date.$office.$mode.$emissionType.$invoiceType.$sectorType.$invoiceNumber.$salePoint;
         $number = $this->mod11String($cuf);
         $number = BigInteger::of($number);
         $cuf = $number->toBase(16);
-        $this->cuf = strtoupper($cuf).$cufdModel->codigo_control;
+        $this->cuf = strtoupper($cuf).$cufd->codigo_control;
     }
 
     private function mod11String(string $number){

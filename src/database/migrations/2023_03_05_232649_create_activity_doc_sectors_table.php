@@ -18,7 +18,7 @@ class CreateActivityDocSectorsTable extends Migration
             $table->string('codigo_actividad');
             $table->string('codigo_documento_sector');
             $table->string('tipo_documento_sector');
-            $table->boolean('activo')->default(false);
+            $table->string('state')->default('ACTIVE');
             $table->timestamps();
         });
     }

@@ -16,6 +16,7 @@ use PedroACF\Invoicing\Models\SIN\Product;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
@@ -80,12 +81,12 @@ class InvServicesTest extends Command
         $privateKey = $this->readPrivateKey();
         $this->keyService->addPrivateKeyFromPem($privateKey);
 
-        $salePoint = 0; // Sin puntos de venta
+        $salePoint = SalePoint::where('sin_code', 0)->first();
         $this->etapaI($salePoint, 1);
         $this->etapaII($salePoint, 1);
         $this->etapaIII($salePoint, 1);
         $this->etapaIV($salePoint, 1);
-        $this->etapaV($salePoint, 1);
+        //$this->etapaV($salePoint, 1);
 //            $this->etapaVI();
         $this->etapaVII($salePoint);
 
@@ -264,9 +265,9 @@ class InvServicesTest extends Command
         $this->writeMessage("Etapa VIII: Firma digital (punto de venta: $this->salePoint)", true, 'warning');
     }
 
-    private function etapaVII($salePoint){
+    private function etapaVII(SalePoint $salePoint){
 
-        $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint)", true, 'warning');
+        $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint->sin_code)", true, 'warning');
         // TODO: Tomar toda la lista de la etapa iv (mejorar esto)
         $forNullifyList = Invoice::all();
         $testLimit = count($forNullifyList);
@@ -280,17 +281,15 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test++, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test++, $testLimit, $passed);
         }
     }
     private function etapaVI($salePoint, $testLimit = 0){
         $this->writeMessage("Etapa VI: Consumo de metodos de emision de paquetes (punto de venta: $this->salePoint)", true, 'warning');
 
     }
-    private function etapaV($salePoint, $testLimit = 0){
-        $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint)", true, 'warning');
+    private function etapaV(SalePoint $salePoint, $testLimit = 0){
+        $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint->sin_code)", true, 'warning');
         $codeService = app(CodeService::class);
 
         $eventTypes = SignificantEventType::all();
@@ -321,15 +320,13 @@ class InvServicesTest extends Command
                 $passed = false;
             }
 
-            $number = str_pad($test++, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
     }
 
-    private function etapaIV($salePoint, $testLimit = 0){
+    private function etapaIV(SalePoint $salePoint, $testLimit = 0){
         $invoicingService = app(InvoicingService::class);
-        $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint)", true, 'warning');
+        $this->writeMessage("Etapa IV: Consumo de metodos de emision individual (punto de venta: $salePoint->sin_code)", true, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
                 //Ejemplo de como generar factura
@@ -385,32 +382,28 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
     }
 
-    private function etapaIII(int $salePoint, $testLimit = 0){
+    private function etapaIII(SalePoint $salePoint, $testLimit = 0){
         $codeService = app(CodeService::class);
-        $this->writeMessage("Etapa III: Obtencion CUFD (punto de venta: $salePoint)", true, 'warning');
+        $this->writeMessage("Etapa III: Obtencion CUFD (punto de venta: $salePoint->sin_code)", true, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $cufd = $codeService->getCufdCode($salePoint, true);
+                $cufd = $codeService->getCufdModel($salePoint, true);
                 $passed = $cufd!=null;
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
     }
 
-    private function etapaII($salePoint, $testLimit = 0){
+    private function etapaII(SalePoint $salePoint, $testLimit = 0){
         $catalogService = app(CatalogService::class);
-        $this->writeMessage("Etapa II: Sincronizacion de catalogos (punto de venta: $salePoint)", true, 'warning');
+        $this->writeMessage("Etapa II: Sincronizacion de catalogos (punto de venta: $salePoint->sin_code)", true, 'warning');
         $this->writeMessage("* 01 LISTADO TOTAL DE ACTIVIDADES *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
@@ -419,9 +412,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 02 FECHA Y HORA ACTUAL *", false, 'warning');
@@ -432,9 +423,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 03 LISTADO TOTAL DE ACTIVIDADES DOCUMENTO SECTOR *", false, 'warning');
@@ -445,9 +434,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 04 LISTADO TOTAL DE LEYENDAS DE FACTURAS", false, 'warning');
@@ -458,9 +445,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 05 LISTADO TOTAL DE MENSAJES DE SERVICIOS *", false, 'warning');
@@ -471,9 +456,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 06 LISTADO TOTAL DE PRODUCTOS Y SERVICIOS *", false, 'warning');
@@ -484,9 +467,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 07 LISTADO TOTAL DE EVENTOS SIGNIFICATIVOS *", false, 'warning');
@@ -497,9 +478,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 08 LISTADO TOTAL DE MOTIVOS DE ANULACION *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -509,9 +488,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 09 LISTADO TOTAL DE PAISES *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -521,9 +498,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 10 LISTADO TOTAL DE TIPOS DE DOCUMENTO DE IDENTIDAD *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -533,9 +508,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 11 LISTADO TOTAL DE TIPOS DE DOCUMENTO SECTOR *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -545,9 +518,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 12 LISTADO TOTAL DE TIPOS DE EMISION *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -557,9 +528,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 13 LISTADO TOTAL DE TIPO HABITACION *", false, 'warning');
@@ -570,9 +539,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 14 LISTADO TOTAL DE METODO DE PAGO *", false, 'warning');
@@ -583,9 +550,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 15 LISTADO TOTAL DE TIPOS DE MONEDA *", false, 'warning');
@@ -596,9 +561,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 16 LISTADO TOTAL DE TIPOS DE PUNTO DE VENTA *", false, 'warning');
@@ -609,9 +572,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
         $this->writeMessage("* 17 LISTADO TOTAL DE TIPOS DE FACTURA *", false, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
@@ -621,9 +582,7 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
 
         $this->writeMessage("* 18 LISTADO TOTAL DE UNIDAD DE MEDIDA *", false, 'warning');
@@ -634,15 +593,13 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
     }
 
-    private function etapaI($salePoint, $testLimit = 0){
+    private function etapaI(SalePoint $salePoint, $testLimit = 0){
         $codeService = app(CodeService::class);
-        $this->writeMessage("Etapa I: Obtencion de CUIS (punto de venta: $salePoint)", true, 'warning');
+        $this->writeMessage("Etapa I: Obtencion de CUIS (punto de venta: $salePoint->sin_code)", true, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
                 $cuis = $codeService->getCuisCode($salePoint, true);
@@ -651,10 +608,14 @@ class InvServicesTest extends Command
                 dump($e);
                 $passed = false;
             }
-            $number = str_pad($test, 3, "0", STR_PAD_LEFT);
-            $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
-            $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
+            $this->write($test, $testLimit, $passed);
         }
+    }
+
+    public function write($test, $testLimit, $passed){
+        $number = str_pad($test, 3, "0", STR_PAD_LEFT);
+        $limit = str_pad($testLimit, 3, "0", STR_PAD_LEFT);
+        $this->writeMessage("$number/$limit > ".($passed? 'passed': 'not pass'), false, $passed? 'info': 'error');
     }
 
     private function writeMessage($message = "", $withBorder = false, $type = ''){
