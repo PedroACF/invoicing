@@ -9,42 +9,31 @@ use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
-class EventoSignificativoRequest extends BaseRequest{
+class ConsultaEventoRequest extends BaseRequest{
     public $codigoAmbiente = 0;
-    public $codigoMotivoEvento = 0;
     public $codigoPuntoVenta = -1;
     public $codigoSistema = '';
     public $codigoSucursal = -1;//0=>Casa matriz
     public $cuis = "";
     public $nit = "";
     public $cufd = "";
-    public $cufdEvento = "";
-    public $descripcion = "";
-    public $fechaHoraInicioEvento = null;
-    public $fechaHoraFinEvento = null;
+    public $fechaEvento = null;
 
-    public function __construct(SalePoint $salePoint, SignificantEvent $event)
+    public function __construct(SalePoint $salePoint, Carbon $date)
     {
-        $config = app(ConfigService::class);
 
-        $this->requestName = "SolicitudEventoSignificativo";
+
+        $config = app(ConfigService::class);
+        $cufdModel = $salePoint->cufdCodes()->where('state', 'ACTIVE')->first();
+        $this->requestName = "SolicitudConsultaEvento";
         $this->codigoAmbiente = $config->getEnvironment();
         $this->codigoPuntoVenta = $salePoint->sin_code;
         $this->codigoSistema = $config->getSystemCode();
         $this->codigoSucursal = $config->getOfficeCode();
         $this->cuis = $salePoint->active_cuis;
+        $this->cufd = $cufdModel? $cufdModel->code: '';
         $this->nit = $config->getNit();
 
-        //cositas
-        $this->codigoMotivoEvento = $event->event_type_code;
-        $this->descripcion = $event->description;
-        $this->cufdEvento = $event->event_cufd;
-        //TODO: Probando
-        $this->cufd = $event->cufd;
-        $start = new Carbon($event->start_datetime);
-        $end = new Carbon($event->end_datetime);
-        $this->fechaHoraInicioEvento = $start->format("Y-m-d\TH:i:s.v");
-        $this->fechaHoraFinEvento = $end->format("Y-m-d\TH:i:s.v");
-        dump($this->toArray());
+        $this->fechaEvento = $date->format('Y-m-d');
     }
 }

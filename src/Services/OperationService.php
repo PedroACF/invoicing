@@ -26,7 +26,9 @@ use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
 use PedroACF\Invoicing\Repositories\OperationRepository;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
+use PedroACF\Invoicing\Requests\Operation\ConsultaEventoRequest;
 use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
+use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
 
 class OperationService
 {
@@ -56,6 +58,14 @@ class OperationService
 
     }
 
+    public function getSignificantEvents(SalePoint $salePoint, Carbon $date): ListaEventosResponse{
+        $request = new ConsultaEventoRequest(
+            $salePoint,
+            $date
+        );
+        return $this->opeRepo->getSignificantEvents($request);
+    }
+
     public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event): bool{
         $conn = $this->opeRepo->checkConnection();
         if($conn->transaccion){
@@ -66,21 +76,19 @@ class OperationService
                 $event
             );
             $response = $this->opeRepo->addSignificantEvent($request);
-            dump($response);
-            $event->state = 'CLOSED';
-            $event->save();
-            return true;
+            if($response->transaccion){
+                $event->state = 'CLOSED';
+                $event->reception_code = $response->codigoRecepcionEventoSignificativo;
+                $event->save();
+                return true;
+            }
         }
         return false;
     }
 
-    public function checkSignificantEvent(){
-
-    }
-
     public function createSignificantEvent(SalePoint $salePoint, SignificantEventType $eventType, string $description): SignificantEvent{
         $event = new SignificantEvent();
-        $event->event_code = $eventType->codigo_clasificador;
+        $event->event_type_code = $eventType->codigo_clasificador;
         $event->description = $description;
         //$event->reception_code = '';
         //$event->cafc = '';

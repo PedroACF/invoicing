@@ -85,7 +85,7 @@ class InvServicesTest extends Command
         $this->etapaI($salePoint, 1);
         $this->etapaII($salePoint, 1);
         $this->etapaIII($salePoint, 1);
-        $this->etapaIV($salePoint, 1);
+        //$this->etapaIV($salePoint, 1);
         $this->etapaV_VI($salePoint, 1);
 //            $this->etapaVI();
         //$this->etapaVII($salePoint);

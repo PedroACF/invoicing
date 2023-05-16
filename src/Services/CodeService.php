@@ -13,6 +13,7 @@ use PedroACF\Invoicing\Requests\Code\CuisRequest;
 use PedroACF\Invoicing\Requests\Code\VerificarNitRequest;
 use PedroACF\Invoicing\Responses\Code\CodeComunicacionResponse;
 use PedroACF\Invoicing\Responses\Code\CufdResponse;
+use PedroACF\Invoicing\Responses\Code\VerificarNitResponse;
 
 class CodeService extends BaseService
 {
@@ -100,12 +101,10 @@ class CodeService extends BaseService
         return null;
     }
 
-    public function checkNit($nitToVerify){
-        $cuis = $this->getCuisCode();
-        $request = new VerificarNitRequest($cuis, $nitToVerify);
-        $response = $this->codeRepo->verificarNit($request);
-        //TODO Terminar
-        dd($response);
+    public function checkNit($salePoint, $nitToVerify): VerificarNitResponse{
+        $request = new VerificarNitRequest($salePoint, $nitToVerify);
+        $response = $this->codeRepo->checkNit($request);
+        return VerificarNitResponse::build($response);
     }
 
     public function getValidCuisModel(SalePoint $salePoint): ?Cuis{

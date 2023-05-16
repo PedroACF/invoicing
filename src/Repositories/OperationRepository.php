@@ -1,6 +1,7 @@
 <?php
 
 namespace PedroACF\Invoicing\Repositories;
+use PedroACF\Invoicing\Requests\Operation\ConsultaEventoRequest;
 use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
 use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
 use PedroACF\Invoicing\Responses\Operation\OperationComunicacionResponse;
@@ -28,8 +29,9 @@ class OperationRepository
     }
 
     //consultaEventoSignificativo
-    public function checkSignificantEvent(){
-        $response = $this->client->consultaEventoSignificativo();
+    public function getSignificantEvents(ConsultaEventoRequest $request): ListaEventosResponse{
+        $response = $this->client->consultaEventoSignificativo($request->toArray());
+        return ListaEventosResponse::build($response);
     }
 
     //consultaPuntoVenta
@@ -40,7 +42,6 @@ class OperationRepository
     //registroEventoSignificativo
     public function addSignificantEvent(EventoSignificativoRequest $request): ListaEventosResponse{
         $response = $this->client->registroEventoSignificativo($request->toArray());
-        dump($response);
         return ListaEventosResponse::build($response);
     }
 
@@ -57,7 +58,6 @@ class OperationRepository
     //verificarComunicacion
     public function checkConnection(): OperationComunicacionResponse{
         $response = $this->client->verificarComunicacion();
-
         return OperationComunicacionResponse::build($response);
     }
 

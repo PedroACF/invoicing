@@ -258,12 +258,13 @@ class ConfigService extends BaseService
     }
 
     public function setServerTimeDiff(int $newVal = 0){
-        Config::firstOrCreate([
-            'key' => 'SERVER_TIME_DIFF'
-        ], [
-            'data_type' => 'int',
-            'value' => $newVal
-        ]);
+        $config = Config::where('key', 'SERVER_TIME_DIFF')->first();
+        if(!$config){
+            $config = new Config();
+            $config->data_type = 'bigint';
+        }
+        $config->value = $newVal;
+        $config->save();
     }
 
     public function getLastInvoiceNumber(){

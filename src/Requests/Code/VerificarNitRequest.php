@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Requests\Code;
 
 use PedroACF\Invoicing\Models\SYS\Config;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Requests\BaseRequest;
 use PedroACF\Invoicing\Services\ConfigService;
 
@@ -15,14 +16,15 @@ class VerificarNitRequest extends BaseRequest{
     public $nit = "";
     public $nitParaVerificacion = "";
 
-    public function __construct($cuis, $nitParaVerificacion){
+    public function __construct(SalePoint $salePoint, string $nitForCheck){
+        $config = app(ConfigService::class);
         $this->requestName = "SolicitudVerificarNit";
-        $this->codigoAmbiente = config("siat_invoicing.enviroment");
-        $this->codigoModalidad = config("siat_invoicing.mode");
-        $this->codigoSistema = config("siat_invoicing.system_code");
-        $this->codigoSucursal = Config::getOfficeCodeConfig()->value;
-        $this->cuis = $cuis;
-        $this->nit = $currentConfig->nit;
-        $this->nitParaVerificacion = $nitParaVerificacion;
+        $this->codigoAmbiente = $config->getEnvironment();
+        $this->codigoModalidad = $config->getInvoiceMode();
+        $this->codigoSistema = $config->getSystemCode();
+        $this->codigoSucursal = $config->getOfficeCode();
+        $this->cuis = $salePoint->active_cuis;
+        $this->nit = $config->getNit();
+        $this->nitParaVerificacion = $nitForCheck;
     }
 }
