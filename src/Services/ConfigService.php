@@ -277,11 +277,8 @@ class ConfigService extends BaseService
     }
 
     public function setLastInvoiceNumber(int $newVal = 0){
-        Config::firstOrCreate([
-            'key' => 'LAST_INVOICE_NUMBER'
-        ], [
-            'data_type' => 'bigint',
-            'value' => (string)$newVal
-        ]);
+        $model = $this->getLastInvoiceNumber();
+        $model->value = (string)$newVal;
+        $model->save();
     }
 }

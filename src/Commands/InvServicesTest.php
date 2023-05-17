@@ -26,6 +26,7 @@ use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Services\OperationService;
 use PedroACF\Invoicing\Services\TokenService;
+use PedroACF\Invoicing\Utils\Generator;
 use PedroACF\Invoicing\Utils\XmlSigner;
 use PedroACF\Invoicing\Utils\XmlValidator;
 
@@ -71,6 +72,12 @@ class InvServicesTest extends Command
      */
     public function handle()
     {
+//        $salePoint = SalePoint::where('sin_code', 0)->first();
+//        //$service = new InvoicingService();
+//        $service = app(InvoicingService::class);
+//        $service->validatePackageReception($salePoint, 'a790b878-f4e9-11ed-8fed-cf42a2df9bec');
+//        dd("fin");
+        //$service = new OperationService();
         $this->readAndSetDelegateToken();
 
         $this->readAndSetConfigs();
@@ -82,9 +89,9 @@ class InvServicesTest extends Command
         $this->keyService->addPrivateKeyFromPem($privateKey);
 
         $salePoint = SalePoint::where('sin_code', 0)->first();
-        $this->etapaI($salePoint, 1);
-        $this->etapaII($salePoint, 1);
-        $this->etapaIII($salePoint, 1);
+        //$this->etapaI($salePoint, 1);
+        //$this->etapaII($salePoint, 1);
+        //$this->etapaIII($salePoint, 1);
         //$this->etapaIV($salePoint, 1);
         $this->etapaV_VI($salePoint, 1);
 //            $this->etapaVI();
@@ -304,7 +311,14 @@ class InvServicesTest extends Command
                 $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
                 $cufd = $codeService->getCufdModel($salePoint, true);//Solo forzar para pruebas
                 $closedEvent = $service->closeSignificantEvent($event, $cufd);
-                $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent);
+
+                $invoiceLimit = $salePoint->sin_code != '0'? 500: $faker->numberBetween(1, 499);
+                $invoices = [];
+                $generator = new Generator();
+                for($i=0;$i<$invoiceLimit; $i++){
+                    $invoices[] = $generator->generateTestInvoice();
+                }
+                $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $invoices);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -319,51 +333,9 @@ class InvServicesTest extends Command
         for($test = 1; $test<=$testLimit; $test++){
             try{
                 //Ejemplo de como generar factura
-                //GENERAR ARCHIVO XML
-                // - inicializar valores auxiliares
-                $faker = Faker::create('es_PE');
-
-                // - Generar cabecera
-                $invoiceHeader = new HeaderEInvoice();
-                $invoiceHeader->nombreRazonSocial = $faker->name;
-                $typeDocument = IdentityDocType::where('descripcion', 'CI - CEDULA DE IDENTIDAD')->first();
-                $invoiceHeader->codigoTipoDocumentoIdentidad = $typeDocument? $typeDocument->codigo_clasificador: 0;
-                $invoiceHeader->numeroDocumento = $faker->randomNumber(8, true);
-                $hasComplement = rand(0,1) == 1;
-                if($hasComplement){
-                    $invoiceHeader->complemento = ($faker->randomLetter()).($faker->randomDigit());
-                }
-                $invoiceHeader->codigoCliente = $faker->randomNumber();//TODO: Esto debe salir de otra tabla
-                $invoiceHeader->codigoMetodoPago = 1;
-                $invoiceHeader->montoTotal = 0.00;
-                $invoiceHeader->montoTotalSujetoIva = 0.00;
-                $invoiceHeader->codigoMoneda = 1;
-                $invoiceHeader->tipoCambio = 1.00;
-                $invoiceHeader->montoTotalMoneda = 0;
-                $invoiceHeader->montoGiftCard = 0;
-                $invoiceHeader->descuentoAdicional = 0.00;
-                $invoiceHeader->codigoExcepcion = 0;//TODO: para nit invalidos 0=>registro normal, 1=> se autoriza el registro
-                $invoiceHeader->leyenda = Legend::inRandomOrder()->first()->descripcion_leyenda;//TODO: Ver de sacar de otro lado
-                $invoiceHeader->usuario = $faker->regexify('[A-Z]{5}[0-4]{3}');
-                $eInvoice = new EInvoice(config("pacf_invoicing.main_schema"), $invoiceHeader);
-                for($i=0;$i<$faker->numberBetween(1, 3); $i++){
-                    //TODO check
-                    $detail = new DetailEInvoice();
-                    $product = Product::inRandomOrder()->first();
-                    $detail->actividadEconomica = $product->codigo_actividad;
-                    $detail->codigoProductoSin = $product->codigo_producto;
-                    $detail->codigoProducto = $faker->randomNumber();
-                    $detail->descripcion = $faker->sentence(10);
-                    $qty = $faker->randomNumber(1, 10);
-                    $detail->cantidad = $qty;
-                    $detail->unidadMedida = $faker->numberBetween(1, 200);
-                    $price = round($faker->randomFloat(5, 1, 100), 2);
-                    $detail->precioUnitario = $price;
-                    $detail->montoDescuento = 0.0;
-                    $detail->subTotal = round($qty*$price, 2);
-                    $detail->numeroImei = 0.0;
-                    $eInvoice->addDetail($detail);
-                }
+                //GENERAR FACTURA
+                $generator = new Generator();
+                $eInvoice = $generator->generateTestInvoice();
                 //=>emision en linea = 1
                 //1=>factura con derecho a credito fiscal
                 $passed = $invoicingService->sendElectronicInvoice($salePoint, $eInvoice, 1,1);

@@ -39,13 +39,12 @@ class HeaderEInvoice extends BaseHeaderInvoice
     public $usuario; //pperez
     public $codigoDocumentoSector; //1
 
-    public function generateCufCode(SalePoint $salePoint){
-        $cufd = $salePoint->cufdCodes()->where('state', 'ACTIVE')->first();
+    public function generateCufCode(SalePoint $salePoint, Cufd $cufd, $emissionType = 1){
         $nit = str_pad($this->nitEmisor, 13, "0", STR_PAD_LEFT);
         $date = str_replace(["-","T",":","."], "", $this->fechaEmision);
         $office = str_pad($this->codigoSucursal, 4, "0", STR_PAD_LEFT);
         $mode = 1;//config("siat_invoicing.mode");
-        $emissionType = 1;//1=>online, 2=> offline, 3=>masiva ->SACAR DE LA BD
+        //$emissionType = 1;//1=>online, 2=> offline, 3=>masiva ->SACAR DE LA BD
         $invoiceType = 1;//SACAR DE LA BD
         $sectorType = str_pad(1, 2, "0", STR_PAD_LEFT);//SACAR DE LA BD
         $invoiceNumber = str_pad($this->numeroFactura, 10, "0", STR_PAD_LEFT);

@@ -9,10 +9,13 @@ use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
 use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
+use PedroACF\Invoicing\Requests\PurchaseSale\ValidacionRecepcionPaqueteRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\VerificacionEstadoFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\ServicioFacturacionResponse;
 use PedroACF\Invoicing\Utils\XmlSigner;
 use PedroACF\Invoicing\Utils\XmlValidator;
+use splitbrain\PHPArchive\Archive;
+use splitbrain\PHPArchive\Zip;
 
 class InvoicingService
 {
@@ -43,7 +46,7 @@ class InvoicingService
             $invoice->header->codigoSucursal = $this->configService->getOfficeCode();
             $invoice->header->direccion = $this->configService->getOfficeAddress();
             $invoice->header->codigoDocumentoSector = $this->configService->getSectorDocumentCode();
-            $invoice->header->generateCufCode($salePoint);
+            $invoice->header->generateCufCode($salePoint, $cufd);
 
             // FIRMAR XML
             $signer = app(XmlSigner::class);
@@ -73,6 +76,7 @@ class InvoicingService
             // dd(libxml_get_errors());
             // COMPRIMIR ZIP
             $compressed = gzencode($content);
+            //$base64 = base64_encode($compressed);
             // OBTENER HASH
             $hash = hash('sha256', $compressed);
             //SEND PACKAGE
@@ -85,9 +89,8 @@ class InvoicingService
             );
             $response = $this->psRepo->sendInvoice($request);
             if($response->transaccion){
-                //Hacer algo con el envio
+                return true;
             }
-            return true;
         }
         return false;
     }
@@ -104,6 +107,12 @@ class InvoicingService
         $result = $this->psRepo->cancelInvoice($request);
         dump($result);
         return $result;
+    }
+
+    public function validatePackageReception(SalePoint $salePoint, $receptionCode){
+        $request = new ValidacionRecepcionPaqueteRequest($salePoint, 2, 1, $receptionCode);
+        $response = $this->psRepo->validateInvoicePackageSend($request);
+        dump($response);
     }
 
     public function checkInvoiceStatus(Invoice $invoice){

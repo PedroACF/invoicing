@@ -45,6 +45,5 @@ class EventoSignificativoRequest extends BaseRequest{
         $end = new Carbon($event->end_datetime);
         $this->fechaHoraInicioEvento = $start->format("Y-m-d\TH:i:s.v");
         $this->fechaHoraFinEvento = $end->format("Y-m-d\TH:i:s.v");
-        dump($this->toArray());
     }
 }

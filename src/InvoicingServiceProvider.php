@@ -22,7 +22,8 @@ class InvoicingServiceProvider extends ServiceProvider
 {
     public function boot(){
         $this->publishes([
-            __DIR__.'/config/pacf_invoicing.php' => config_path('pacf_invoicing.php')
+            __DIR__.'/config/pacf_invoicing.php' => config_path('pacf_invoicing.php'),
+            __DIR__.'/../public' => public_path('vendor/pacf_invoicing')
         ]);
         $this->mergeConfigFrom(__DIR__.'/config/pacf_invoicing.php', 'pacf_invoicing');
         $this->loadMigrationsFrom(__DIR__.'/database/migrations');

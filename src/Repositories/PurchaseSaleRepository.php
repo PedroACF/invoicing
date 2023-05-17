@@ -3,6 +3,8 @@
 namespace PedroACF\Invoicing\Repositories;
 use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
+use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionPaqueteFacturaRequest;
+use PedroACF\Invoicing\Requests\PurchaseSale\ValidacionRecepcionPaqueteRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\VerificacionEstadoFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\PurchaseSaleComunicacionResponse;
 use PedroACF\Invoicing\Responses\PurchaseSale\ServicioFacturacionResponse;
@@ -42,8 +44,9 @@ class PurchaseSaleRepository
     }
 
     //recepcionPaqueteFactura
-    public function sendInvoicePackage(){
-        $response = $this->client->recepcionPaqueteFactura();
+    public function sendInvoicePackage(RecepcionPaqueteFacturaRequest $request): ServicioFacturacionResponse{
+        $response = $this->client->recepcionPaqueteFactura($request->toArray());
+        return ServicioFacturacionResponse::build($response);
     }
 
     //validacionRecepcionMasivaFactura
@@ -52,8 +55,9 @@ class PurchaseSaleRepository
     }
 
     //validacionRecepcionPaqueteFactura
-    public function validateInvoicePackageSend(){
-        $response = $this->client->validacionRecepcionPaqueteFactura();
+    public function validateInvoicePackageSend(ValidacionRecepcionPaqueteRequest $request): ServicioFacturacionResponse{
+        $response = $this->client->validacionRecepcionPaqueteFactura($request->toArray());
+        return ServicioFacturacionResponse::build($response);
     }
 
     //verificacionEstadoFactura
