@@ -35,6 +35,7 @@ class PurchaseSaleRepository
     //recepcionFactura
     public function sendInvoice(RecepcionFacturaRequest $req): ServicioFacturacionResponse{
         $response = $this->client->recepcionFactura( $req->toArray() );
+        //dump($response);
         return ServicioFacturacionResponse::build($response);
     }
 

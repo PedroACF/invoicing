@@ -46,6 +46,7 @@ class InvoicingService
             $invoice->header->codigoSucursal = $this->configService->getOfficeCode();
             $invoice->header->direccion = $this->configService->getOfficeAddress();
             $invoice->header->codigoDocumentoSector = $this->configService->getSectorDocumentCode();
+            $invoice->header->codigoPuntoVenta = $salePoint->sin_code;
             $invoice->header->generateCufCode($salePoint, $cufd);
 
             // FIRMAR XML

@@ -59,7 +59,6 @@ class CodeRepository
             $response = $this->client->verificarComunicacion();
             return CodeComunicacionResponse::build($response);
         }catch (SoapFault $ex){
-            dump($ex);
             throw new SoapException($ex->getMessage());
         }
     }
