@@ -29,10 +29,15 @@ use PedroACF\Invoicing\Repositories\DataSyncRepository;
 use PedroACF\Invoicing\Repositories\OperationRepository;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
 use PedroACF\Invoicing\Requests\DataSync\SincronizacionRequest;
+use PedroACF\Invoicing\Requests\Operation\CierrePuntoVentaRequest;
 use PedroACF\Invoicing\Requests\Operation\ConsultaEventoRequest;
+use PedroACF\Invoicing\Requests\Operation\ConsultaPuntoVentaRequest;
 use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
+use PedroACF\Invoicing\Requests\Operation\RegistroPuntoVentaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionPaqueteFacturaRequest;
+use PedroACF\Invoicing\Responses\Operation\ConsultaPuntoVentaResponse;
 use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
+use PedroACF\Invoicing\Responses\Operation\RegistroPuntoVentaResponse;
 use PedroACF\Invoicing\Utils\Packer;
 use PedroACF\Invoicing\Utils\XmlSigner;
 
@@ -52,16 +57,35 @@ class OperationService
         // Cierre total de operaciones (inhabilita cuis y cufd actuales)
     }
 
-    public function addSalePoint(string $name, string $description){
-
+    public function addSalePoint(SalePoint $model, SalePointType $salePointType, string $name, string $description): ?SalePoint{
+        $request = new RegistroPuntoVentaRequest($model, $salePointType, $name, $description);
+        $resp = $this->opeRepo->addSalePoint($request);
+        if($resp->transaccion){
+            $model = new SalePoint();
+            $model->sin_code = $resp->codigoPuntoVenta;
+            $model->sale_point_type = $salePointType->codigo_clasificador;
+            $model->name = $name;
+            $model->description = $description;
+            $model->state = 'ACTIVE';
+            $model->save();
+            return $model;
+        }
+        return null;
     }
 
-    public function closeSalePoint(int $salePointCode){
-
+    public function closeSalePoint(SalePoint $salePoint, SalePoint $salePointToClose){
+        $request = new CierrePuntoVentaRequest($salePoint, $salePointToClose);
+        $response = $this->opeRepo->closeSalePoint($request);
+        if($response->transaccion){
+            $salePointToClose->state = 'INACTIVE';
+            $salePointToClose->save();
+        }
+        return $salePointToClose;
     }
 
-    public function checkSalePoint(){
-
+    public function checkSalePoints(SalePoint $salePoint): ConsultaPuntoVentaResponse{
+        $request = new ConsultaPuntoVentaRequest($salePoint);
+        return $this->opeRepo->checkSalePoints($request);
     }
 
     public function getSignificantEvents(SalePoint $salePoint, Carbon $date): ListaEventosResponse{

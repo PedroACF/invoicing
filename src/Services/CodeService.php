@@ -61,7 +61,7 @@ class CodeService extends BaseService
                 if($conn->transaccion){
                     $request = new CufdRequest($salePoint);
                     $response = $this->codeRepo->cufd($request);
-                    if($response->hasCodes([])){
+                    if($response->hasCodes([]) || !$response->transaccion){
                         throw new BaseException("Error CUFD");//TODO: Definir que codigo genera error
                     }
                     $salePoint->cufdCodes()->update(['state'=>'INACTIVE']);
@@ -82,7 +82,7 @@ class CodeService extends BaseService
             if($conn->transaccion){
                 $request = new CufdRequest($salePoint);
                 $response = $this->codeRepo->cufd($request);
-                if($response->hasCodes([])){
+                if($response->hasCodes([]) || !$response->transaccion){
                     throw new BaseException("Error CUFD");//TODO: Definir que codigo genera error
                 }
                 $salePoint->cufdCodes()->update(['state'=>'INACTIVE']);

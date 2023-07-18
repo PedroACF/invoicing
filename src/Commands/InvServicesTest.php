@@ -6,19 +6,12 @@ use Carbon\Carbon;
 use Faker\Factory as Faker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
-use PedroACF\Invoicing\Invoices\DetailEInvoice;
-use PedroACF\Invoicing\Invoices\EInvoice;
-use PedroACF\Invoicing\Invoices\HeaderEInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
-use PedroACF\Invoicing\Models\SIN\IdentityDocType;
-use PedroACF\Invoicing\Models\SIN\Legend;
-use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
-use PedroACF\Invoicing\Models\SYS\SignificantEvent;
-use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
 use PedroACF\Invoicing\Services\ConfigService;
@@ -27,8 +20,6 @@ use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Services\OperationService;
 use PedroACF\Invoicing\Services\TokenService;
 use PedroACF\Invoicing\Utils\Generator;
-use PedroACF\Invoicing\Utils\XmlSigner;
-use PedroACF\Invoicing\Utils\XmlValidator;
 
 class InvServicesTest extends Command
 {
@@ -88,15 +79,18 @@ class InvServicesTest extends Command
         $privateKey = $this->readPrivateKey();
         $this->keyService->addPrivateKeyFromPem($privateKey);
 
-        $salePoint = SalePoint::where('sin_code', 0)->first();
-        //$this->etapaI($salePoint, 1);
-        //$this->etapaII($salePoint, 1);
-        //$this->etapaIII($salePoint, 1);
-        //$this->etapaIV($salePoint, 1);
-        $this->etapaV_VI($salePoint, 1);
-//            $this->etapaVI();
-        //$this->etapaVII($salePoint);
-
+        //$salePoint = SalePoint::where('sin_code', 0)->first();
+        //$this->initOperations();
+        $salePoints = SalePoint::where('state', 'ACTIVE')->where('sin_code', 1)->get();
+        foreach ($salePoints as $salePoint){
+//            $this->etapaI($salePoint, 1);
+//            $this->etapaII($salePoint, 50);
+            //TODO
+            $this->etapaIII($salePoint, 100);
+            //$this->etapaIV($salePoint, 1);
+            //$this->etapaV_VI($salePoint, 1);
+            //$this->etapaVII($salePoint);
+        }
     }
 
     private function readAndSetConfigs(){
@@ -267,6 +261,26 @@ class InvServicesTest extends Command
         return $fileContent;
     }
 
+    private function initOperations(){
+        $opService = app(OperationService::class);
+        $name = 'PV_5';
+        $description = 'PV_5 Descripcion';
+        //=>Get Master Sale Point
+        $salePoint = SalePoint::where('sin_code', 0)->where('state', 'ACTIVE')->first();
+        //=>Get Sale Point Type
+        $salePointType = SalePointType::where('descripcion', 'PUNTO DE VENTA CAJEROS')->first();
+
+        /** PARA LISTAR **/
+//        $list = $opService->checkSalePoints($salePoint);//Lista activos
+//        dd($list);
+        /** PARA AGREGAR **/
+        //$salePointOne = $opService->addSalePoint($salePoint, $salePointType, $name, $description);
+        /** PARA CERRAR **/
+//        $salePointToClose = SalePoint::where('sin_code', 6)->first();
+//        $salePointClosed = $opService->closeSalePoint($salePoint, $salePointToClose);
+//        dd($salePointClosed);
+    }
+
     private function etapaVIII(){
         $testLimit = 115;
         $this->writeMessage("Etapa VIII: Firma digital (punto de venta: $this->salePoint)", true, 'warning');
@@ -352,7 +366,7 @@ class InvServicesTest extends Command
         $this->writeMessage("Etapa III: Obtencion CUFD (punto de venta: $salePoint->sin_code)", true, 'warning');
         for($test = 1; $test<=$testLimit; $test++){
             try{
-                $cufd = $codeService->getCufdModel($salePoint, true);
+                $cufd = $codeService->getCufdModel($salePoint, true);//true=>forzar nuevo cufd
                 $passed = $cufd!=null;
             }catch (\Exception $e){
                 dump($e);

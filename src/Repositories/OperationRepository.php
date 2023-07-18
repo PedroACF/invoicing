@@ -1,10 +1,16 @@
 <?php
 
 namespace PedroACF\Invoicing\Repositories;
+use PedroACF\Invoicing\Requests\Operation\CierrePuntoVentaRequest;
 use PedroACF\Invoicing\Requests\Operation\ConsultaEventoRequest;
+use PedroACF\Invoicing\Requests\Operation\ConsultaPuntoVentaRequest;
 use PedroACF\Invoicing\Requests\Operation\EventoSignificativoRequest;
+use PedroACF\Invoicing\Requests\Operation\RegistroPuntoVentaRequest;
+use PedroACF\Invoicing\Responses\Operation\CierrePuntoVentaResponse;
+use PedroACF\Invoicing\Responses\Operation\ConsultaPuntoVentaResponse;
 use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
 use PedroACF\Invoicing\Responses\Operation\OperationComunicacionResponse;
+use PedroACF\Invoicing\Responses\Operation\RegistroPuntoVentaResponse;
 use PedroACF\Invoicing\Utils\TokenUtils;
 
 class OperationRepository
@@ -24,8 +30,9 @@ class OperationRepository
     }
 
     //cierrePuntoVenta
-    public function closeSalePoint(){
-        $response = $this->client->cierrePuntoVenta();
+    public function closeSalePoint(CierrePuntoVentaRequest $request): CierrePuntoVentaResponse{
+        $response = $this->client->cierrePuntoVenta($request->toArray());
+        return CierrePuntoVentaResponse::build($response);
     }
 
     //consultaEventoSignificativo
@@ -35,8 +42,9 @@ class OperationRepository
     }
 
     //consultaPuntoVenta
-    public function checkSalePoint(){
-        $response = $this->client->consultaPuntoVenta();
+    public function checkSalePoints(ConsultaPuntoVentaRequest $request){
+        $response = $this->client->consultaPuntoVenta($request->toArray());
+        return ConsultaPuntoVentaResponse::build($response);
     }
 
     //registroEventoSignificativo
@@ -46,8 +54,9 @@ class OperationRepository
     }
 
     //registroPuntoVenta
-    public function addSalePoint(){
-        $response = $this->client->registroPuntoVenta();
+    public function addSalePoint(RegistroPuntoVentaRequest $request): RegistroPuntoVentaResponse{
+        $response = $this->client->registroPuntoVenta($request->toArray());
+        return RegistroPuntoVentaResponse::build($response);
     }
 
     //registroPuntoVentaComisionista
