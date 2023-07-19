@@ -5,9 +5,15 @@ use Faker\Factory as Faker;
 use PedroACF\Invoicing\Invoices\DetailEInvoice;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Invoices\HeaderEInvoice;
+use PedroACF\Invoicing\Models\SIN\EmissionType;
 use PedroACF\Invoicing\Models\SIN\IdentityDocType;
 use PedroACF\Invoicing\Models\SIN\Legend;
+use PedroACF\Invoicing\Models\SIN\Measurement;
 use PedroACF\Invoicing\Models\SIN\Product;
+use PedroACF\Invoicing\Models\SYS\Buyer;
+use PedroACF\Invoicing\Models\SYS\Sale;
+use PedroACF\Invoicing\Models\SYS\SaleDetail;
+use PedroACF\Invoicing\Models\SYS\SalePoint;
 
 class Generator
 {
@@ -57,5 +63,81 @@ class Generator
             $eInvoice->addDetail($detail);
         }
         return $eInvoice;
+    }
+
+    public function generateTestSale(SalePoint $salePoint, EmissionType $emissionType): Sale{
+        $faker = Faker::create('es_PE');
+        //Generar venta
+        $sale = new Sale();
+        //CUF, CUFD se llena despues
+        //$table->dateTime('emission_date');
+        $sale->total_amount = 0.0;
+        $sale->iva_total_amount = 0.0;
+        $sale->currency_total_amount = 0.0;
+        $buyer_doc = $faker->randomNumber(8, true);
+        $buyer = Buyer::where("document_number", $buyer_doc)->first();
+        if($buyer==null){
+            $buyer = new Buyer();
+            $buyer->name = $faker->name;
+            $buyer->document_number = $buyer_doc;
+            $buyer->email = $faker->email;
+            $buyer->phone = $faker->numberBetween($min = 66000000, $max = 71000000);
+            $documentType = IdentityDocType::inRandomOrder()->first();
+            if($documentType->codigo_clasificador == 1){
+                if(rand(0, 1) == 1){
+                    $buyer->document_complement = ($faker->randomLetter()).($faker->randomDigit());
+                }
+            }elseif ($documentType->codigo_clasificador == 5){
+                //$sale->exception_code = rand(0, 1);
+            }
+            $buyer->document_type_code = $documentType->codigo_clasificador;
+            $buyer->save();
+        }
+        //CLIENT DATA
+        $sale->document_number = $buyer->document_number;
+        $sale->document_complement = $buyer->document_complement;
+        $sale->buyer_name = $buyer->name;
+        $sale->buyer_id = $buyer->id;
+        //SIN RELATIONS
+        $sale->document_type_code = $buyer->document_type_code;
+        $sale->emission_type_code = $emissionType->codigo_clasificador;
+        $sale->payment_method_code = 1;//EFECTIVO
+        $sale->sector_doc_type_code = 1;//TODO: Consumir de servicio
+        $sale->sale_point_code = $salePoint->sin_code;
+        $sale->currency_code = 1;//MONEDA BOLIVIANOS
+        //$table->binary('signed_invoice')->nullable();
+        //MY TABLES RELATIONS
+        $sale->user_creation = $faker->regexify('[A-Z]{5}[0-4]{3}');
+        $sale->save();
+        $total = 0;
+        for($i=0;$i<$faker->numberBetween(1, 5); $i++){
+            //TODO check
+            $detail = new SaleDetail();
+            //TODO: CAMBIAR A TIPO DE ACTIVIDAD?
+            $product = Product::inRandomOrder()->first();
+            $detail->code = $faker->randomNumber();
+            $detail->description = $faker->sentence(10);
+            $qty = $faker->randomNumber(1, 10);
+            $detail->quantity = $qty;
+            $price = round($faker->randomFloat(5, 1, 100), 2);
+            $detail->unit_price = $price;
+            $detail->discount_amount = 0.0;
+            $detail->sub_amount = round($qty*$price, 2);
+
+            $detail->activity_code = $product->codigo_actividad;
+            $detail->product_code = $product->codigo_producto;
+            $detail->measurement_unit_code = Measurement::inRandomOrder()->first()->codigo_clasificador;
+
+            $detail->serial_number = null;
+            $detail->imei_number = null;
+            $detail->sale_id = $sale->id;
+            $detail->save();
+            $total = $total + round($qty*$price, 2);
+        }
+        $sale->total_amount = $total;
+        $sale->iva_total_amount = $total;
+        $sale->currency_total_amount = $total * $sale->exchange_rate;
+        $sale->save();
+        return $sale;
     }
 }

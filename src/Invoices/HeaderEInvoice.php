@@ -43,10 +43,10 @@ class HeaderEInvoice extends BaseHeaderInvoice
         $nit = str_pad($this->nitEmisor, 13, "0", STR_PAD_LEFT);
         $date = str_replace(["-","T",":","."], "", $this->fechaEmision);
         $office = str_pad($this->codigoSucursal, 4, "0", STR_PAD_LEFT);
-        $mode = 1;//config("siat_invoicing.mode");
+        $mode = 1;//SACAR de la tabla configs
         //$emissionType = 1;//1=>online, 2=> offline, 3=>masiva ->SACAR DE LA BD
         $invoiceType = 1;//SACAR DE LA BD
-        $sectorType = str_pad(1, 2, "0", STR_PAD_LEFT);//SACAR DE LA BD
+        $sectorType = str_pad(1, 2, "0", STR_PAD_LEFT);//SACAR DE LA BD configs
         $invoiceNumber = str_pad($this->numeroFactura, 10, "0", STR_PAD_LEFT);
         $salePoint = str_pad($salePoint->sin_code, 4, "0", STR_PAD_LEFT);
 

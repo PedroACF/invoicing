@@ -85,7 +85,23 @@ class OperationService
 
     public function checkSalePoints(SalePoint $salePoint): ConsultaPuntoVentaResponse{
         $request = new ConsultaPuntoVentaRequest($salePoint);
-        return $this->opeRepo->checkSalePoints($request);
+        $response = $this->opeRepo->checkSalePoints($request);
+        foreach($response->salePoints??[] as $rSalePoint){
+            $salePoint = SalePoint::where('sin_code', $rSalePoint->codigoPuntoVenta)->first();
+            if($salePoint==null){
+                $salePoint = new SalePoint();
+                $salePoint->sin_code = $rSalePoint->codigoPuntoVenta;
+                $salePoint->name = $rSalePoint->nombrePuntoVenta;
+                $salePoint->description = '...';
+                $type = SalePointType::where("descripcion", $rSalePoint->tipoPuntoVenta)->first();
+                if($type!=null){
+                    $salePoint->sale_point_type = $type->codigo_clasificador;
+                }
+            }
+            $salePoint->state = "ACTIVE";
+            $salePoint->save();
+        }
+        return $response;
     }
 
     public function getSignificantEvents(SalePoint $salePoint, Carbon $date): ListaEventosResponse{

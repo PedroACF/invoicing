@@ -21,14 +21,6 @@ class ConfigService extends BaseService
     private $systemCode = null;
     private $sectorDocumentCode = null;
 
-    public function getAvailableInvoiceNumber(): int{
-        $model = $this->getLastInvoiceNumber();
-        $lastNumber = (int)($model->value);
-        $lastNumber++;
-        $this->setLastInvoiceNumber($lastNumber);
-        return $lastNumber;
-    }
-
     public function getTime(): Carbon{
         $model = $this->getServerTimeDiff();
         $difference = (int)($model->value);
@@ -265,20 +257,5 @@ class ConfigService extends BaseService
         }
         $config->value = $newVal;
         $config->save();
-    }
-
-    public function getLastInvoiceNumber(){
-        return Config::firstOrCreate([
-            'key' => 'LAST_INVOICE_NUMBER'
-        ], [
-            'data_type' => 'bigint',
-            'value' => '0'
-        ]);
-    }
-
-    public function setLastInvoiceNumber(int $newVal = 0){
-        $model = $this->getLastInvoiceNumber();
-        $model->value = (string)$newVal;
-        $model->save();
     }
 }

@@ -5,6 +5,7 @@ namespace PedroACF\Invoicing\Services;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
 use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
 use PedroACF\Invoicing\Requests\PurchaseSale\AnulacionFacturaRequest;
@@ -29,24 +30,20 @@ class InvoicingService
         $this->codeService = $codeService;
         $this->configService = $configService;
     }
-    public function sendElectronicInvoice(SalePoint $salePoint, EInvoice $invoice, int $emissionType, int $invoiceType): bool{
+    public function sendElectronicInvoice(SalePoint $salePoint, Sale $sale): bool{
         $conn = $this->psRepo->checkConnection();
         if($conn->transaccion){
             $emissionDate = $this->configService->getTime();
             // COMPLETE INVOICE
             $cufd = $salePoint->cufdCodes()->where('state','ACTIVE')->first();
-            $invoiceNumber = $this->configService->getAvailableInvoiceNumber();
-            $invoice->header->fechaEmision = $emissionDate->format("Y-m-d\TH:i:s.v");
-            $invoice->header->nitEmisor = $this->configService->getNit();
-            $invoice->header->razonSocialEmisor = $this->configService->getBusinessName();
-            $invoice->header->municipio = $this->configService->getMunicipality();
-            $invoice->header->telefono = $this->configService->getOfficePhone();
-            $invoice->header->numeroFactura = $invoiceNumber;
-            $invoice->header->cufd = $cufd->code;
-            $invoice->header->codigoSucursal = $this->configService->getOfficeCode();
-            $invoice->header->direccion = $this->configService->getOfficeAddress();
-            $invoice->header->codigoDocumentoSector = $this->configService->getSectorDocumentCode();
-            $invoice->header->codigoPuntoVenta = $salePoint->sin_code;
+            $sale->emission_date = $emissionDate;//Formatear
+            //$invoice->header->nitEmisor = $this->configService->getNit();
+            //$invoice->header->razonSocialEmisor = $this->configService->getBusinessName();
+            //$invoice->header->municipio = $this->configService->getMunicipality();
+            //$invoice->header->telefono = $this->configService->getOfficePhone();
+            $sale->cufd = $cufd->code;
+            $sale->sector_doc_type_code = $this->configService->getSectorDocumentCode();
+            $sale->sale_point_code = $salePoint->sin_code;
             $invoice->header->generateCufCode($salePoint, $cufd);
 
             // FIRMAR XML

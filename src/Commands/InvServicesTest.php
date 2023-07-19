@@ -7,6 +7,7 @@ use Faker\Factory as Faker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SIN\EmissionType;
 use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SYS\Config;
@@ -79,14 +80,16 @@ class InvServicesTest extends Command
         $privateKey = $this->readPrivateKey();
         $this->keyService->addPrivateKeyFromPem($privateKey);
 
-        //$salePoint = SalePoint::where('sin_code', 0)->first();
-        //$this->initOperations();
-        $salePoints = SalePoint::where('state', 'ACTIVE')->where('sin_code', 1)->get();
+        $this->initOperations();
+        $salePoints = SalePoint::where('state', 'ACTIVE')->get();
         foreach ($salePoints as $salePoint){
-            //$this->etapaI($salePoint, 1);
-            //$this->etapaII($salePoint, 50);
-            //$this->etapaIII($salePoint, 100);
-            $this->etapaIV($salePoint, 125);
+            //$this->etapaI($salePoint, 1);//OK
+            //$this->etapaII($salePoint, 50);//OK
+            //$this->etapaIII($salePoint, 100);//OK
+//            $this->etapaI($salePoint, 1);//OK
+//            $this->etapaII($salePoint, 1);//OK
+//            $this->etapaIII($salePoint, 1);//OK
+            $this->etapaIV($salePoint, 2);
             //$this->etapaV_VI($salePoint, 1);
             //$this->etapaVII($salePoint);
         }
@@ -262,18 +265,24 @@ class InvServicesTest extends Command
 
     private function initOperations(){
         $opService = app(OperationService::class);
-        $name = 'PV_5';
-        $description = 'PV_5 Descripcion';
-        //=>Get Master Sale Point
+        //Master sale point
         $salePoint = SalePoint::where('sin_code', 0)->where('state', 'ACTIVE')->first();
-        //=>Get Sale Point Type
-        $salePointType = SalePointType::where('descripcion', 'PUNTO DE VENTA CAJEROS')->first();
-
-        /** PARA LISTAR **/
-//        $list = $opService->checkSalePoints($salePoint);//Lista activos
-//        dd($list);
-        /** PARA AGREGAR **/
-        //$salePointOne = $opService->addSalePoint($salePoint, $salePointType, $name, $description);
+        $this->etapaI($salePoint, 1);
+        $this->etapaII($salePoint, 1);
+        // Listar y buscar punto de venta 1
+        $resp = $opService->checkSalePoints($salePoint);//Lista activos
+        $list = $resp->salePoints;
+        if(!$this->findInArray(1, $list)){
+            //crear punto de venta 1 en caso de no existir
+            //get Sale Point Type
+            $salePointType = SalePointType::where('descripcion', 'PUNTO DE VENTA CAJEROS')->first();
+            $name = 'PV_1';
+            $description = 'PV_1 Descripcion';
+            $salePointOne = $opService->addSalePoint($salePoint, $salePointType, $name, $description);
+            if($salePointOne==null){
+                dump("no se pudo crear punto de venta 1");
+            }
+        }
         /** PARA CERRAR **/
 //        $salePointToClose = SalePoint::where('sin_code', 6)->first();
 //        $salePointClosed = $opService->closeSalePoint($salePoint, $salePointToClose);
@@ -348,10 +357,13 @@ class InvServicesTest extends Command
                 //Ejemplo de como generar factura
                 //GENERAR FACTURA
                 $generator = new Generator();
-                $eInvoice = $generator->generateTestInvoice();
+                $emission = EmissionType::where("descripcion", "EN LINEA")->first();
+                $sale = $generator->generateTestSale($salePoint, $emission);
+                dump($sale->details);
+                dd($sale);
                 //=>emision en linea = 1
                 //1=>factura con derecho a credito fiscal
-                $passed = $invoicingService->sendElectronicInvoice($salePoint, $eInvoice, 1,1);
+                //$passed = $invoicingService->sendElectronicInvoice($salePoint, $eInvoice, 1,1);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
@@ -625,5 +637,14 @@ class InvServicesTest extends Command
                 break;
         }
         return $rText;
+    }
+
+    private function findInArray($salePointCode, $salePointList): bool{
+        foreach($salePointList as $salePoint){
+            if($salePoint->codigoPuntoVenta == $salePointCode){
+                return true;
+            }
+        }
+        return false;
     }
 }
