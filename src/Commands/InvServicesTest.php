@@ -86,11 +86,8 @@ class InvServicesTest extends Command
             //$this->etapaI($salePoint, 1);//OK
             //$this->etapaII($salePoint, 50);//OK
             //$this->etapaIII($salePoint, 100);//OK
-            $this->etapaI($salePoint, 1);//OK
-            $this->etapaII($salePoint, 1);//OK
-            $this->etapaIII($salePoint, 1);//OK
-            $this->etapaIV($salePoint, 10);
-            //$this->etapaV_VI($salePoint, 1);
+            //$this->etapaIV($salePoint, 125);
+            $this->etapaV_VI($salePoint, 1);
             //$this->etapaVII($salePoint);
         }
     }
@@ -291,6 +288,7 @@ class InvServicesTest extends Command
     }
 
     private function etapaVIII(){
+        //Esta etapa se paso al enviar las facturas
         $testLimit = 115;
         $this->writeMessage("Etapa VIII: Firma digital (punto de venta: $this->salePoint)", true, 'warning');
     }
@@ -322,31 +320,40 @@ class InvServicesTest extends Command
         $this->writeMessage("Etapa V: Registro de Eventos Significativos (punto de venta: $salePoint->sin_code)", true, 'warning');
         $codeService = app(CodeService::class);
         $eventTypes = SignificantEventType::all();
-        $test = 1;
         $faker = Faker::create('es_PE');
         foreach($eventTypes as $eventType){
-            if($test>$testLimit){
-                break;
-            }
-            try{
-                //crear event
-                $service = app(OperationService::class);
-                $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
-                $cufd = $codeService->getCufdModel($salePoint, true);//Solo forzar para pruebas
-                $closedEvent = $service->closeSignificantEvent($event, $cufd);
-
-                $invoiceLimit = $salePoint->sin_code != '0'? 500: $faker->numberBetween(1, 499);
-                $invoices = [];
-                $generator = new Generator();
-                for($i=0;$i<$invoiceLimit; $i++){
-                    $invoices[] = $generator->generateTestInvoice();
+            for($test=0;$test<$testLimit;$test++){
+                if($test>$testLimit){
+                    break;
                 }
-                $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $invoices);
-            }catch (\Exception $e){
-                dump($e);
-                $passed = false;
+                try{
+                    $cafc = null;
+                    if($eventType->codigo_clasificador >= 5){
+                        $cafc = $faker->regexify('[A-Z]{5}[0-4]{3}');
+                    }
+                    //crear event
+                    $service = app(OperationService::class);
+                    $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
+                    $cufd = $codeService->getCufdModel($salePoint, true);//Forzar nuevo cufd para enviar las pruebas
+                    $closedEvent = $service->closeSignificantEvent($event, $cufd);
+
+                    $saleLimit = $salePoint->sin_code != '0'? $faker->numberBetween(1001, 1010): $faker->numberBetween(1, 499);
+                    dump("INVOICES: $saleLimit");
+                    //$saleLimit = $salePoint->sin_code != '0'? 1000: $faker->numberBetween(1, 499);
+                    $sales = [];
+                    $generator = new Generator();
+                    $emission = EmissionType::where("descripcion", "FUERA DE LINEA")->first();
+                    for($i=0;$i<$saleLimit; $i++){
+                        $sales[] = $generator->generateTestSale($salePoint, $emission, $cafc);
+                    }
+
+                    $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $sales, $cafc);
+                }catch (\Exception $e){
+                    dump($e);
+                    $passed = false;
+                }
+                $this->write($test++, $testLimit, $passed);
             }
-            $this->write($test++, $testLimit, $passed);
         }
     }
 

@@ -3,6 +3,7 @@
 namespace PedroACF\Invoicing\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use PedroACF\Invoicing\Models\SIN\Activity;
@@ -23,6 +24,7 @@ use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SectorDocType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SIN\SourceCountry;
+use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Models\SYS\SignificantEvent;
 use PedroACF\Invoicing\Repositories\DataSyncRepository;
@@ -39,7 +41,9 @@ use PedroACF\Invoicing\Responses\Operation\ConsultaPuntoVentaResponse;
 use PedroACF\Invoicing\Responses\Operation\ListaEventosResponse;
 use PedroACF\Invoicing\Responses\Operation\RegistroPuntoVentaResponse;
 use PedroACF\Invoicing\Utils\Packer;
+use PedroACF\Invoicing\Utils\XmlGenerator;
 use PedroACF\Invoicing\Utils\XmlSigner;
+use PedroACF\Invoicing\Utils\XmlValidator;
 
 class OperationService
 {
@@ -112,7 +116,7 @@ class OperationService
         return $this->opeRepo->getSignificantEvents($request);
     }
 
-    public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event, $invoices = []): bool{
+    public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event, $sales = [], ?string $cafc): bool{
         $conn = $this->opeRepo->checkConnection();
         if($conn->transaccion){
             $start = new Carbon($event->start_datetime);
@@ -126,40 +130,56 @@ class OperationService
                 $event->state = 'CLOSED';
                 $event->reception_code = $response->codigoRecepcionEventoSignificativo;
                 $event->save();
-                $now = Carbon::now();
-                $path = public_path('vendor/pacf_invoicing/temp_files/pkg_'.$now->getTimestampMs().'.tar');
                 $this->deleteOldFiles();
-                $packer = new Packer($path);
-                foreach ($invoices as $i=>$invoice){
-                    $emissionDate = $this->configService->getTime();
-                    // COMPLETE INVOICE
-                    $invoiceNumber = $this->configService->getAvailableInvoiceNumber();
-                    $invoice->header->fechaEmision = $emissionDate->format("Y-m-d\TH:i:s.v");
-                    $invoice->header->nitEmisor = $this->configService->getNit();
-                    $invoice->header->razonSocialEmisor = $this->configService->getBusinessName();
-                    $invoice->header->municipio = $this->configService->getMunicipality();
-                    $invoice->header->telefono = $this->configService->getOfficePhone();
-                    $invoice->header->numeroFactura = $invoiceNumber;
-                    $invoice->header->cufd = $event->event_cufd;
-                    $invoice->header->codigoSucursal = $this->configService->getOfficeCode();
-                    $invoice->header->direccion = $this->configService->getOfficeAddress();
-                    $invoice->header->codigoDocumentoSector = $this->configService->getSectorDocumentCode();
-                    $invoice->header->generateCufCode($salePoint, Cufd::where('code', $event->event_cufd)->first(), 2);
-
-                    // FIRMAR XML
-                    $signer = app(XmlSigner::class);
-                    $signedXML = $signer->sign($invoice->toXml()->saveXML());
-                    $packer->addFromString("factura_$i.xml", $signedXML);
-                }
-                $count = count($invoices);
-                $compress = $packer->compress(\Phar::GZ);
-                $file = file_get_contents($path.'.gz');
-                $hash = hash('sha256', $file);
-                $packageRequest = new RecepcionPaqueteFacturaRequest($salePoint, 2, 1, $file, $hash, null, $count, $event->reception_code);
-                $packageRepo = new PurchaseSaleRepository();
-                $response = $packageRepo->sendInvoicePackage($packageRequest);
-                if($response->transaccion){
-                    // TODO: Set codigo recepcion
+                $saleGroups = array_chunk($sales, 500);
+                foreach($saleGroups as $saleGroup){
+                    $now = Carbon::now();
+                    $path = public_path('vendor/pacf_invoicing/temp_files/pkg_'.$now->getTimestampMs().'.tar');
+                    $packer = new Packer($path);
+                    $sale_ids = [];
+                    foreach ($saleGroup as $i=> $sale){
+                        $sale->refresh();
+                        $xmlGenerator = app(XmlGenerator::class);
+                        //$xmlGenerator = new XmlGenerator();
+                        $emissionDate = $this->configService->getTime();
+                        // COMPLETE INVOICE
+                        $sale->emission_date = $emissionDate;//Formatear
+                        $cufd = Cufd::where('code', $event->cufd)->first();
+                        $sale->cufd = $cufd->code;
+                        $sale->sector_doc_type_code = $this->configService->getSectorDocumentCode();
+                        $sale->sale_point_code = $salePoint->sin_code;
+                        $arrayData = $xmlGenerator->saleToArray(config("pacf_invoicing.main_schema"), $sale, $cufd->codigo_control);
+                        $sale->cuf = Arr::get($arrayData, 'head.cuf');
+                        $xmlInvoice = $xmlGenerator->arrayToXml($arrayData);
+                        $signer = app(XmlSigner::class);
+                        $xmlSigned = $signer->sign($xmlInvoice->saveXML());
+                        $sale->signed_invoice = $xmlSigned;
+                        $sale->save();
+                        $sale->refresh();
+                        $content = stream_get_contents($sale->signed_invoice);
+                        // VALIDAR CON XSD
+                        $xmlValidator = new XmlValidator($content);
+                        $xmlValidator->validate();
+                        //$content = stream_get_contents($sale->signed_invoice);
+                        $packer->addFromString("factura_$i.xml", $content);
+                        $sale_ids[] = $sale->id;
+                    }
+                    $count = count($saleGroup);
+                    $compress = $packer->compress(\Phar::GZ);
+                    $file = file_get_contents($path.'.gz');
+                    $hash = hash('sha256', $file);
+                    $emission = EmissionType::where('descripcion', 'FUERA DE LINEA')->first();
+                    $packageRequest = new RecepcionPaqueteFacturaRequest($salePoint, $emission, $file, $hash, $cafc, $count, $event->reception_code);
+                    $packageRepo = new PurchaseSaleRepository();
+                    $response = $packageRepo->sendInvoicePackage($packageRequest);
+                    if($response->transaccion){
+                        Sale::whereIn('id', $sale_ids)->update([
+                           'reception_code' => $response->codigoRecepcion,
+                           'state' => Sale::ENUM_SENT,
+                           'significant_event_id' => $event->id
+                        ]);
+                        // TODO: Set codigo recepcion
+                    }
                 }
                 return true;
             }

@@ -66,7 +66,7 @@ class Generator
         return $eInvoice;
     }
 
-    public function generateTestSale(SalePoint $salePoint, EmissionType $emissionType): Sale{
+    public function generateTestSale(SalePoint $salePoint, EmissionType $emissionType, ?string $cafc): Sale{
         $faker = Faker::create('es_PE');
         //Generar venta
         $sale = new Sale();
@@ -75,6 +75,7 @@ class Generator
         $sale->total_amount = 0.0;
         $sale->iva_total_amount = 0.0;
         $sale->currency_total_amount = 0.0;
+        $sale->cafc = $cafc;
         $buyer_doc = $faker->randomNumber(8, true);
         $buyer = Buyer::where("document_number", $buyer_doc)->first();
         if($buyer==null){
