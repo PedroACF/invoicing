@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\Sale;
 
 class CreateSalesTable extends Migration
 {
@@ -57,7 +57,7 @@ class CreateSalesTable extends Migration
             $table->string('user_creation');
             //OTHERS
             $table->text('observations')->nullable();
-            $table->enum('state', Invoice::getEnumTypes())->default(Invoice::ENUM_PENDANT);//VALIDA, RECHAZADA, PENDIENTE (DE ENVIO)
+            $table->enum('state', Sale::getEnumTypes())->default(Sale::ENUM_PENDANT);//VALIDA, RECHAZADA, PENDIENTE (DE ENVIO)
 
             $table->unsignedBigInteger('significant_event_id')->nullable();
             $table->foreign('significant_event_id')->references('id')->on('sys_significant_events');

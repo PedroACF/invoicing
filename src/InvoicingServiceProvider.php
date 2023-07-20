@@ -16,6 +16,7 @@ use PedroACF\Invoicing\Services\InvoicingService;
 use PedroACF\Invoicing\Services\KeyService;
 use PedroACF\Invoicing\Services\OperationService;
 use PedroACF\Invoicing\Services\TokenService;
+use PedroACF\Invoicing\Utils\XmlGenerator;
 use PedroACF\Invoicing\Utils\XmlSigner;
 
 class InvoicingServiceProvider extends ServiceProvider
@@ -42,6 +43,9 @@ class InvoicingServiceProvider extends ServiceProvider
         });
         $this->app->bind(XmlSigner::class, function(Application $app){
             return new XmlSigner($app->make(KeyService::class));
+        });
+        $this->app->bind(XmlGenerator::class, function(Application $app){
+            return new XmlGenerator($app->make(ConfigService::class));
         });
 
         //Repositories

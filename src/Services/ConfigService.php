@@ -5,6 +5,8 @@ namespace PedroACF\Invoicing\Services;
 use Carbon\Carbon;
 use PedroACF\Invoicing\Exceptions\BadConfigException;
 use PedroACF\Invoicing\Exceptions\ConfigException;
+use PedroACF\Invoicing\Models\SIN\Activity;
+use PedroACF\Invoicing\Models\SIN\Legend;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\DelegateToken;
 
@@ -18,8 +20,12 @@ class ConfigService extends BaseService
     private $officeAddress = null;
     private $environment = null;//1 => PRODUCCION, 2 => PRUEBAS
     private $invoiceMode = null;//1 => ELECTRONICA, 2 => COMPUTARIZADA
+
+    private $invoiceTypeCode = null;
     private $systemCode = null;
     private $sectorDocumentCode = null;
+    private $activityCode = null;
+    private $legendId = null;
 
     public function getTime(): Carbon{
         $model = $this->getServerTimeDiff();
@@ -218,6 +224,28 @@ class ConfigService extends BaseService
         $this->invoiceMode = null;
     }
 
+    public function getInvoiceTypeCode(){//Modalidad
+        if($this->invoiceTypeCode == null){
+            $model = Config::where('key', 'INVOICE_TYPE_CODE')->first();
+            if($model && strlen($model->value)>0 ){
+                $this->invoiceTypeCode = $model->value;
+            }else{
+                throw new ConfigException('Tipo de factura no configurada');
+            }
+        }
+        return $this->invoiceTypeCode;
+    }
+
+    public function setInvoiceTypeCode(int $newVal){
+        Config::firstOrCreate([
+            'key' => 'INVOICE_TYPE_CODE'
+        ], [
+            'data_type' => 'int',
+            'value' => (string)$newVal
+        ]);
+        $this->invoiceTypeCode = null;
+    }
+
     public function getSectorDocumentCode(){//Codigo Documento sector
         if($this->sectorDocumentCode == null){
             $model = Config::where('key', 'SECTOR_DOCUMENT_CODE')->first();
@@ -238,6 +266,74 @@ class ConfigService extends BaseService
             'value' => (string)$newVal
         ]);
         $this->sectorDocumentCode = null;
+    }
+
+    public function getLegendId(){//Codigo Documento sector
+        if($this->legendId == null){
+            $model = Config::where('key', 'LEGEND_ID')->first();
+            if($model && strlen($model->value)>0 ){
+                $this->legendId = (int)$model->value;
+            }else{
+                throw new ConfigException('Leyenda no configurada');
+            }
+        }
+        return $this->legendId;
+    }
+
+    public function setLegendId(int $newVal){
+        Config::firstOrCreate([
+            'key' => 'LEGEND_ID'
+        ], [
+            'data_type' => 'int',
+            'value' => (string)$newVal
+        ]);
+        $this->legendId = null;
+    }
+
+    public function getActivityCode(){//Codigo Documento sector
+        if($this->activityCode == null){
+            $model = Config::where('key', 'ACTIVITY_CODE')->first();
+            if($model && strlen($model->value)>0 ){
+                $this->activityCode = (int)$model->value;
+            }else{
+                throw new ConfigException('Actividad no configurada');
+            }
+        }
+        return $this->activityCode;
+    }
+
+    public function getLegendText($random = true){//Codigo Documento sector
+        //Esto cambiara
+        $legend = 'NO LEGEND';
+        if($random){
+            if($this->activityCode != null){
+                $activity = Activity::where('codigo_caeb', $this->activityCode)->first();
+                if($activity!=null){
+                    $legendModel = Legend::where('codigo_actividad', $activity->codigo_caeb)->inRandomOrder()->first();
+                    if($legendModel!=null){
+                        $legend = $legendModel->descripcion_leyenda;
+                    }
+                }
+            }
+        }else{
+            if($this->legendId != null){
+                $legendModel = Legend::where('id', $this->legendId)->first();
+                if($legendModel!=null){
+                    $legend = $legendModel->descripcion_leyenda;
+                }
+            }
+        }
+        return $legend;
+    }
+
+    public function setActivityCode(int $newVal){
+        Config::firstOrCreate([
+            'key' => 'ACTIVITY_CODE'
+        ], [
+            'data_type' => 'int',
+            'value' => (string)$newVal
+        ]);
+        $this->activityCode = null;
     }
 
     public function getServerTimeDiff(){

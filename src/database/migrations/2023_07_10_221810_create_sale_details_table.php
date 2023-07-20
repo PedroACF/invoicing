@@ -26,7 +26,7 @@ class CreateSaleDetailsTable extends Migration
             $table->string('imei_number')->nullable();
             //SIN RELATIONS
             $table->string('activity_code');
-            $table->string('product_code');//producto
+            $table->string('sin_product_code');//producto
             $table->string('measurement_unit_code');
 
 

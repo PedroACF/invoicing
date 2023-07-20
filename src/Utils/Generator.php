@@ -14,6 +14,7 @@ use PedroACF\Invoicing\Models\SYS\Buyer;
 use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SaleDetail;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
+use PedroACF\Invoicing\Services\CodeService;
 
 class Generator
 {
@@ -88,7 +89,12 @@ class Generator
                     $buyer->document_complement = ($faker->randomLetter()).($faker->randomDigit());
                 }
             }elseif ($documentType->codigo_clasificador == 5){
-                //$sale->exception_code = rand(0, 1);
+                $codeService = app(CodeService::class);
+                $response = $codeService->checkNit($salePoint, $buyer_doc);
+                if(!$response->transaccion){
+                    $sale->exception_code = 1;
+                    $buyer->observations = $response->getJsonMessages();
+                }
             }
             $buyer->document_type_code = $documentType->codigo_clasificador;
             $buyer->save();
@@ -105,6 +111,7 @@ class Generator
         $sale->sector_doc_type_code = 1;//TODO: Consumir de servicio
         $sale->sale_point_code = $salePoint->sin_code;
         $sale->currency_code = 1;//MONEDA BOLIVIANOS
+        $sale->exchange_rate = 1;
         //$table->binary('signed_invoice')->nullable();
         //MY TABLES RELATIONS
         $sale->user_creation = $faker->regexify('[A-Z]{5}[0-4]{3}');
@@ -125,7 +132,7 @@ class Generator
             $detail->sub_amount = round($qty*$price, 2);
 
             $detail->activity_code = $product->codigo_actividad;
-            $detail->product_code = $product->codigo_producto;
+            $detail->sin_product_code = $product->codigo_producto;
             $detail->measurement_unit_code = Measurement::inRandomOrder()->first()->codigo_clasificador;
 
             $detail->serial_number = null;

@@ -24,4 +24,18 @@ class BaseResponse
         });
         return count($filtered)>0;
     }
+
+    public function getJsonMessages(){
+        $json = [
+            'transaction' => $this->transaccion,
+            'messages' => []
+        ];
+        foreach ($this->mensajes as $mensaje){
+            $json['messages'][] = [
+              'code'=>$mensaje->code,
+              'msg'=>$mensaje->description
+            ];
+        }
+        return json_encode($json);
+    }
 }

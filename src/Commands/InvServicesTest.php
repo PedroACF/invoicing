@@ -86,10 +86,10 @@ class InvServicesTest extends Command
             //$this->etapaI($salePoint, 1);//OK
             //$this->etapaII($salePoint, 50);//OK
             //$this->etapaIII($salePoint, 100);//OK
-//            $this->etapaI($salePoint, 1);//OK
-//            $this->etapaII($salePoint, 1);//OK
-//            $this->etapaIII($salePoint, 1);//OK
-            $this->etapaIV($salePoint, 2);
+            $this->etapaI($salePoint, 1);//OK
+            $this->etapaII($salePoint, 1);//OK
+            $this->etapaIII($salePoint, 1);//OK
+            $this->etapaIV($salePoint, 10);
             //$this->etapaV_VI($salePoint, 1);
             //$this->etapaVII($salePoint);
         }
@@ -178,6 +178,7 @@ class InvServicesTest extends Command
 
         $this->configService->setEnvironment(Config::$ENV_TEST);
         $this->configService->setInvoiceMode(Config::$MODE_ELEC);
+        $this->configService->setInvoiceTypeCode(1);
         $this->configService->setBusinessName($businessName);
         $this->configService->setMunicipality($municipality);
         $this->configService->setOfficeCode(0);
@@ -359,11 +360,7 @@ class InvServicesTest extends Command
                 $generator = new Generator();
                 $emission = EmissionType::where("descripcion", "EN LINEA")->first();
                 $sale = $generator->generateTestSale($salePoint, $emission);
-                dump($sale->details);
-                dd($sale);
-                //=>emision en linea = 1
-                //1=>factura con derecho a credito fiscal
-                //$passed = $invoicingService->sendElectronicInvoice($salePoint, $eInvoice, 1,1);
+                $passed = $invoicingService->sendElectronicInvoice($salePoint, $sale);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;

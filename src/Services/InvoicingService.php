@@ -2,6 +2,7 @@
 
 namespace PedroACF\Invoicing\Services;
 
+use Illuminate\Support\Arr;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
 use PedroACF\Invoicing\Models\SYS\Invoice;
@@ -13,6 +14,7 @@ use PedroACF\Invoicing\Requests\PurchaseSale\RecepcionFacturaRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\ValidacionRecepcionPaqueteRequest;
 use PedroACF\Invoicing\Requests\PurchaseSale\VerificacionEstadoFacturaRequest;
 use PedroACF\Invoicing\Responses\PurchaseSale\ServicioFacturacionResponse;
+use PedroACF\Invoicing\Utils\XmlGenerator;
 use PedroACF\Invoicing\Utils\XmlSigner;
 use PedroACF\Invoicing\Utils\XmlValidator;
 use splitbrain\PHPArchive\Archive;
@@ -33,41 +35,26 @@ class InvoicingService
     public function sendElectronicInvoice(SalePoint $salePoint, Sale $sale): bool{
         $conn = $this->psRepo->checkConnection();
         if($conn->transaccion){
+            $sale->refresh();
+            $xmlGenerator = app(XmlGenerator::class);
+            //$xmlGenerator = new XmlGenerator();
             $emissionDate = $this->configService->getTime();
             // COMPLETE INVOICE
             $cufd = $salePoint->cufdCodes()->where('state','ACTIVE')->first();
             $sale->emission_date = $emissionDate;//Formatear
-            //$invoice->header->nitEmisor = $this->configService->getNit();
-            //$invoice->header->razonSocialEmisor = $this->configService->getBusinessName();
-            //$invoice->header->municipio = $this->configService->getMunicipality();
-            //$invoice->header->telefono = $this->configService->getOfficePhone();
             $sale->cufd = $cufd->code;
             $sale->sector_doc_type_code = $this->configService->getSectorDocumentCode();
             $sale->sale_point_code = $salePoint->sin_code;
-            $invoice->header->generateCufCode($salePoint, $cufd);
-
-            // FIRMAR XML
+            $arrayData = $xmlGenerator->saleToArray(config("pacf_invoicing.main_schema"), $sale, $cufd->codigo_control);
+            $sale->cuf = Arr::get($arrayData, 'head.cuf');
+            $xmlInvoice = $xmlGenerator->arrayToXml($arrayData);
             $signer = app(XmlSigner::class);
-            $signedXML = $signer->sign($invoice->toXml()->saveXML());
-
-            // SAVE MODEL INVOICE
-            $document = [$invoice->header->numeroDocumento];
-            if(isset($invoice->header->complemento)){
-                $document[] = $invoice->header->complemento;
-            }
-            $model = new Invoice();
-            $model->number = $invoiceNumber;
-            $model->cuf = $invoice->header->cuf;
-            $model->document = implode("-", $document);
-            $model->client_name = $invoice->header->razonSocialEmisor;
-            $model->emission_date = $emissionDate;
-            $model->amount = $invoice->header->montoTotal;
-            $model->content = $signedXML;
-            $model->user_id = 0;//$faker->randomNumber();
-            $model->save();
-            $model->refresh();
-            $content = stream_get_contents($model->content);
-
+            $xmlSigned = $signer->sign($xmlInvoice->saveXML());
+            $sale->signed_invoice = $xmlSigned;
+            $sale->save();
+            $sale->refresh();
+;
+            $content = stream_get_contents($sale->signed_invoice);
             // VALIDAR CON XSD
             $xmlValidator = new XmlValidator($content);
             $xmlValidator->validate();
@@ -80,14 +67,21 @@ class InvoicingService
             //SEND PACKAGE
             $request = new RecepcionFacturaRequest(
                 $salePoint,
-                $emissionType,
-                $invoiceType,
+                $sale->emission_type_code,
+                $this->configService->getInvoiceTypeCode(),
                 $compressed,
                 $hash
             );
             $response = $this->psRepo->sendInvoice($request);
             if($response->transaccion){
+                $sale->reception_code = $response->codigoRecepcion;
+                $sale->state = Sale::ENUM_VALID;
+                $sale->save();
                 return true;
+            }else{
+                $sale->state = Sale::ENUM_REJECTED;
+                $sale->observations = $response->codigoEstado." - ".$response->getJsonMessages();
+                $sale->save();
             }
         }
         return false;

@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    public const ENUM_VALID = 'VALIDA';
-    public const ENUM_REJECTED = 'RECHAZADO';
-    public const ENUM_PENDANT = 'PENDIENTE DE ENVIO';
+    public const ENUM_VALID = 'VALID';
+    public const ENUM_REJECTED = 'REJECTED';
+    public const ENUM_SENT = 'SENT';
+    public const ENUM_PENDANT = 'PENDANT';
 
     protected $table = 'sys_sales';
 
@@ -21,6 +22,6 @@ class Sale extends Model
     }
 
     public static function getEnumTypes(): array{
-        return [self::ENUM_VALID, self::ENUM_REJECTED, self::ENUM_PENDANT];
+        return [self::ENUM_VALID, self::ENUM_REJECTED, self::ENUM_SENT, self::ENUM_PENDANT];
     }
 }
