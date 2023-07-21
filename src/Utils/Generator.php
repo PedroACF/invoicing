@@ -15,6 +15,7 @@ use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SaleDetail;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Services\CodeService;
+use PedroACF\Invoicing\Services\ConfigService;
 
 class Generator
 {
@@ -68,8 +69,10 @@ class Generator
 
     public function generateTestSale(SalePoint $salePoint, EmissionType $emissionType, ?string $cafc): Sale{
         $faker = Faker::create('es_PE');
+        $service = app(ConfigService::class);
         //Generar venta
         $sale = new Sale();
+        $sale->emission_date = $service->getTime();
         //CUF, CUFD se llena despues
         //$table->dateTime('emission_date');
         $sale->total_amount = 0.0;

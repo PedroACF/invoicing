@@ -25,6 +25,7 @@ class CreateSignificantEventsTable extends Migration
             $table->dateTime('end_datetime')->nullable();
             $table->string('state')->default('OPEN');
             $table->integer('sale_point')->default(0);
+            $table->text('observations')->nullable();
             $table->timestamps();
         });
     }

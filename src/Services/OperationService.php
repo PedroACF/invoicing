@@ -116,11 +116,11 @@ class OperationService
         return $this->opeRepo->getSignificantEvents($request);
     }
 
-    public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event, $sales = [], ?string $cafc): bool{
+    public function finishAndSendSignificantEvent($salePoint, SignificantEvent $event, $sales = [], ?string $cafc): ?array{
         $conn = $this->opeRepo->checkConnection();
         if($conn->transaccion){
-            $start = new Carbon($event->start_datetime);
-            $end = new Carbon($event->end_datetime);
+//            $start = new Carbon($event->start_datetime);
+//            $end = new Carbon($event->end_datetime);
             $request = new EventoSignificativoRequest(
                 $salePoint,
                 $event
@@ -132,6 +132,7 @@ class OperationService
                 $event->save();
                 $this->deleteOldFiles();
                 $saleGroups = array_chunk($sales, 500);
+                $responseCodes = [];
                 foreach($saleGroups as $saleGroup){
                     $now = Carbon::now();
                     $path = public_path('vendor/pacf_invoicing/temp_files/pkg_'.$now->getTimestampMs().'.tar');
@@ -141,10 +142,9 @@ class OperationService
                         $sale->refresh();
                         $xmlGenerator = app(XmlGenerator::class);
                         //$xmlGenerator = new XmlGenerator();
-                        $emissionDate = $this->configService->getTime();
                         // COMPLETE INVOICE
-                        $sale->emission_date = $emissionDate;//Formatear
-                        $cufd = Cufd::where('code', $event->cufd)->first();
+                        //$sale->emission_date = $emissionDate;//Formatear
+                        $cufd = Cufd::where('code', $event->event_cufd)->first();
                         $sale->cufd = $cufd->code;
                         $sale->sector_doc_type_code = $this->configService->getSectorDocumentCode();
                         $sale->sale_point_code = $salePoint->sin_code;
@@ -178,13 +178,16 @@ class OperationService
                            'state' => Sale::ENUM_SENT,
                            'significant_event_id' => $event->id
                         ]);
+                        $responseCodes[] = $response->codigoRecepcion;
                         // TODO: Set codigo recepcion
+                    }else{
+                        $responseCodes[] = '';
                     }
                 }
-                return true;
+                return $responseCodes;
             }
         }
-        return false;
+        return null;
     }
 
     public function createSignificantEvent(SalePoint $salePoint, SignificantEventType $eventType, string $description): SignificantEvent{

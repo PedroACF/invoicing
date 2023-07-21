@@ -61,6 +61,8 @@ class PurchaseSaleRepository
     //validacionRecepcionPaqueteFactura
     public function validateInvoicePackageSend(ValidacionRecepcionPaqueteRequest $request): ServicioFacturacionResponse{
         $response = $this->client->validacionRecepcionPaqueteFactura($request->toArray());
+        dump("Verificando: ".$request->codigoRecepcion);
+        dump($response);
         return ServicioFacturacionResponse::build($response);
     }
 

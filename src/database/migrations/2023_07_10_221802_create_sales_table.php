@@ -57,10 +57,14 @@ class CreateSalesTable extends Migration
             $table->string('user_creation');
             //OTHERS
             $table->text('observations')->nullable();
+            $table->string('response_code')->nullable();
             $table->enum('state', Sale::getEnumTypes())->default(Sale::ENUM_PENDANT);//VALIDA, RECHAZADA, PENDIENTE (DE ENVIO)
 
             $table->unsignedBigInteger('significant_event_id')->nullable();
             $table->foreign('significant_event_id')->references('id')->on('sys_significant_events');
+
+            $table->unsignedBigInteger('package_id')->nullable();
+            $table->foreign('package_id')->references('id')->on('sys_packages');
 
             $table->boolean("test")->default(true);
             $table->timestamps();

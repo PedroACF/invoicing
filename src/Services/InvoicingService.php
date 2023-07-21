@@ -104,6 +104,7 @@ class InvoicingService
     public function validatePackageReception(SalePoint $salePoint, $receptionCode){
         $request = new ValidacionRecepcionPaqueteRequest($salePoint, 2, 1, $receptionCode);
         $response = $this->psRepo->validateInvoicePackageSend($request);
+        dump("validate on invicing service");
         dump($response);
     }
 

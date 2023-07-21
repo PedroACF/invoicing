@@ -87,7 +87,11 @@ class InvServicesTest extends Command
             //$this->etapaII($salePoint, 50);//OK
             //$this->etapaIII($salePoint, 100);//OK
             //$this->etapaIV($salePoint, 125);
-            $this->etapaV_VI($salePoint, 1);
+            $this->etapaI($salePoint, 1);
+            $this->etapaII($salePoint, 1);
+            $this->etapaIII($salePoint, 1);
+            $this->etapaIV($salePoint, 1);
+            //$this->etapaV_VI($salePoint, 1);
             //$this->etapaVII($salePoint);
         }
     }
@@ -334,8 +338,6 @@ class InvServicesTest extends Command
                     //crear event
                     $service = app(OperationService::class);
                     $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
-                    $cufd = $codeService->getCufdModel($salePoint, true);//Forzar nuevo cufd para enviar las pruebas
-                    $closedEvent = $service->closeSignificantEvent($event, $cufd);
 
                     $saleLimit = $salePoint->sin_code != '0'? $faker->numberBetween(1001, 1010): $faker->numberBetween(1, 499);
                     dump("INVOICES: $saleLimit");
@@ -346,8 +348,21 @@ class InvServicesTest extends Command
                     for($i=0;$i<$saleLimit; $i++){
                         $sales[] = $generator->generateTestSale($salePoint, $emission, $cafc);
                     }
+                    $cufd = $codeService->getCufdModel($salePoint, true);//Forzar nuevo cufd para enviar las pruebas
+                    $closedEvent = $service->closeSignificantEvent($event, $cufd);
 
-                    $passed = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $sales, $cafc);
+                    $responseCodes = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $sales, $cafc);
+                    if($responseCodes != null){
+                        foreach($responseCodes as $code){
+                            if(strlen($code)>0){
+                                $invService = app(InvoicingService::class);
+                                $invService->validatePackageReception($salePoint, $code);
+                            }
+                        }
+                        $passed = true;
+                    }else{
+                        $passed = false;
+                    }
                 }catch (\Exception $e){
                     dump($e);
                     $passed = false;
@@ -366,7 +381,7 @@ class InvServicesTest extends Command
                 //GENERAR FACTURA
                 $generator = new Generator();
                 $emission = EmissionType::where("descripcion", "EN LINEA")->first();
-                $sale = $generator->generateTestSale($salePoint, $emission);
+                $sale = $generator->generateTestSale($salePoint, $emission, null);
                 $passed = $invoicingService->sendElectronicInvoice($salePoint, $sale);
             }catch (\Exception $e){
                 dump($e);
