@@ -76,11 +76,13 @@ class InvoicingService
             if($response->transaccion){
                 $sale->reception_code = $response->codigoRecepcion;
                 $sale->state = Sale::ENUM_VALID;
+                $sale->response_code = $response->codigoEstado;
                 $sale->save();
                 return true;
             }else{
                 $sale->state = Sale::ENUM_REJECTED;
-                $sale->observations = $response->codigoEstado." - ".$response->getJsonMessages();
+                $sale->response_code = $response->codigoEstado;
+                $sale->observations = $response->getJsonMessages();
                 $sale->save();
             }
         }
