@@ -8,6 +8,7 @@ class Sale extends Model
 {
     public const ENUM_VALID = 'VALID';
     public const ENUM_REJECTED = 'REJECTED';
+    public const ENUM_OBSERVED = 'OBSERVED';
     public const ENUM_SENT = 'SENT';
     public const ENUM_PENDANT = 'PENDANT';
 
@@ -22,6 +23,6 @@ class Sale extends Model
     }
 
     public static function getEnumTypes(): array{
-        return [self::ENUM_VALID, self::ENUM_REJECTED, self::ENUM_SENT, self::ENUM_PENDANT];
+        return [self::ENUM_VALID, self::ENUM_REJECTED, self::ENUM_SENT, self::ENUM_PENDANT, self::ENUM_OBSERVED];
     }
 }

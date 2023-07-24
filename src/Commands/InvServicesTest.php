@@ -12,6 +12,8 @@ use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\Package;
+use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Services\CatalogService;
 use PedroACF\Invoicing\Services\CodeService;
@@ -87,12 +89,13 @@ class InvServicesTest extends Command
             //$this->etapaII($salePoint, 50);//OK
             //$this->etapaIII($salePoint, 100);//OK
             //$this->etapaIV($salePoint, 125);
-            $this->etapaI($salePoint, 1);
-            $this->etapaII($salePoint, 1);
-            $this->etapaIII($salePoint, 1);
-            $this->etapaIV($salePoint, 1);
-            //$this->etapaV_VI($salePoint, 1);
-            //$this->etapaVII($salePoint);
+//            $this->etapaI($salePoint, 1);
+//            $this->etapaII($salePoint, 1);
+//            $this->etapaIII($salePoint, 1);
+//            $this->etapaIV($salePoint, 1);
+//            $this->etapaV_VI($salePoint, 1);
+            //$this->etapaVII($salePoint, 10);
+            $this->etapaXX($salePoint);// Esta no existe, se verifica al final los paquetes enviados
         }
     }
 
@@ -291,29 +294,40 @@ class InvServicesTest extends Command
 //        dd($salePointClosed);
     }
 
+    private function etapaXX(SalePoint $salePoint){
+        $packages = Package::where('state', Package::ENUM_SENT)->get();
+        foreach($packages as $package){
+            $invService = app(InvoicingService::class);
+            $invService->validatePackageReception($salePoint, $package);
+            $this->writeMessage("Checando el paquete ".$package->id.": ", false, 'warning');
+        }
+    }
+
     private function etapaVIII(){
         //Esta etapa se paso al enviar las facturas
         $testLimit = 115;
         $this->writeMessage("Etapa VIII: Firma digital (punto de venta: $this->salePoint)", true, 'warning');
     }
 
-    private function etapaVII(SalePoint $salePoint){
+    private function etapaVII(SalePoint $salePoint, $testLimit = 1){
 
         $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint->sin_code)", true, 'warning');
         // TODO: Tomar toda la lista de la etapa iv (mejorar esto)
-        $forNullifyList = Invoice::all();
-        $testLimit = count($forNullifyList);
+        $forCancelList = Sale::where('sale_point_code', $salePoint->sin_code)->whereNull('cancel_code')->where('state', Sale::ENUM_VALID)->get();
         $test = 1;
-        foreach($forNullifyList as $invoice){
+        foreach($forCancelList as $sale){
             try{
                 $service = app(InvoicingService::class);
                 $cancelReason = CancelReason::inRandomOrder()->first();
-                $passed = $service->cancelInvoice($salePoint, $invoice, $cancelReason, 1);
+                $passed = $service->cancelInvoice($salePoint, $sale, $cancelReason, 1);
             }catch (\Exception $e){
                 dump($e);
                 $passed = false;
             }
             $this->write($test++, $testLimit, $passed);
+            if($test>$testLimit){
+                break;
+            }
         }
     }
     private function etapaVI($salePoint, $testLimit = 0){
@@ -351,14 +365,8 @@ class InvServicesTest extends Command
                     $cufd = $codeService->getCufdModel($salePoint, true);//Forzar nuevo cufd para enviar las pruebas
                     $closedEvent = $service->closeSignificantEvent($event, $cufd);
 
-                    $responseCodes = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $sales, $cafc);
-                    if($responseCodes != null){
-                        foreach($responseCodes as $code){
-                            if(strlen($code)>0){
-                                $invService = app(InvoicingService::class);
-                                $invService->validatePackageReception($salePoint, $code);
-                            }
-                        }
+                    $packageIds = $service->finishAndSendSignificantEvent($salePoint, $closedEvent, $sales, $cafc);
+                    if($packageIds != null){
                         $passed = true;
                     }else{
                         $passed = false;

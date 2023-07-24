@@ -1,6 +1,7 @@
 <?php
 namespace PedroACF\Invoicing\Requests\PurchaseSale;
 use Carbon\Carbon;
+use PedroACF\Invoicing\Models\SIN\EmissionType;
 use PedroACF\Invoicing\Models\SYS\Config;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Requests\BaseRequest;
@@ -22,15 +23,16 @@ class ValidacionRecepcionPaqueteRequest extends BaseRequest
     public $tipoFacturaDocumento = 0;
     public $codigoRecepcion;
 
-    public function __construct(SalePoint $salePoint, $emissionCode, $invoiceType, $receptionCode)
+    public function __construct(SalePoint $salePoint, $invoiceType, $receptionCode)
     {
+        $offlineEmission = EmissionType::where("descripcion", "FUERA DE LINEA")->first();
         $cufd = $salePoint->cufdCodes()->where('state','ACTIVE')->first();
         $config = app(ConfigService::class);
         //$config = new ConfigService();
         $this->requestName = "SolicitudServicioValidacionRecepcionPaquete";
         $this->codigoAmbiente = $config->getEnvironment();
         $this->codigoDocumentoSector = $config->getSectorDocumentCode();
-        $this->codigoEmision = $emissionCode; //TODO: Verificar
+        $this->codigoEmision = $offlineEmission->codigo_clasificador;
         $this->codigoModalidad = $config->getInvoiceMode();
         $this->codigoPuntoVenta = $salePoint->sin_code;
         $this->codigoSistema = $config->getSystemCode();

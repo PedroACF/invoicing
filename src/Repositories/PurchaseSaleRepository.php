@@ -24,6 +24,7 @@ class PurchaseSaleRepository
     //anulacionFactura
     public function cancelInvoice(AnulacionFacturaRequest $req): ServicioFacturacionResponse{
         $response = $this->client->anulacionFactura($req->toArray());
+        dump($response);
         return ServicioFacturacionResponse::build($response);
     }
 

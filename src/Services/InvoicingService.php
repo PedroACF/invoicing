@@ -5,7 +5,9 @@ namespace PedroACF\Invoicing\Services;
 use Illuminate\Support\Arr;
 use PedroACF\Invoicing\Invoices\EInvoice;
 use PedroACF\Invoicing\Models\SIN\CancelReason;
+use PedroACF\Invoicing\Models\SIN\EmissionType;
 use PedroACF\Invoicing\Models\SYS\Invoice;
+use PedroACF\Invoicing\Models\SYS\Package;
 use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Repositories\PurchaseSaleRepository;
@@ -53,7 +55,6 @@ class InvoicingService
             $sale->signed_invoice = $xmlSigned;
             $sale->save();
             $sale->refresh();
-;
             $content = stream_get_contents($sale->signed_invoice);
             // VALIDAR CON XSD
             $xmlValidator = new XmlValidator($content);
@@ -77,6 +78,7 @@ class InvoicingService
                 $sale->reception_code = $response->codigoRecepcion;
                 $sale->state = Sale::ENUM_VALID;
                 $sale->response_code = $response->codigoEstado;
+                $sale->observations = $response->getJsonMessages();
                 $sale->save();
                 return true;
             }else{
@@ -89,23 +91,49 @@ class InvoicingService
         return false;
     }
 
-    public function cancelInvoice(SalePoint $salePoint, Invoice $invoice, CancelReason $reason, $emissionCode): ServicioFacturacionResponse{
+    public function cancelInvoice(SalePoint $salePoint, Sale $sale, CancelReason $reason): ServicioFacturacionResponse{
+        $emission = EmissionType::where('descripcion', 'EN LINEA')->first();
         $sectorDocumentCode = $this->configService->getSectorDocumentCode();
         $request = new AnulacionFacturaRequest(
             $salePoint,
             $sectorDocumentCode,
-            $emissionCode,1,
+            $emission->codigo_clasificador,
+            $this->configService->getInvoiceTypeCode(),
             $reason->codigo_clasificador,
-            $invoice->cuf
+            $sale->cuf
         );
         $result = $this->psRepo->cancelInvoice($request);
+        if($result->transaccion){
+            $sale->cancel_code = $reason->codigo_clasificador;
+            $sale->cancel_reason = $reason->descripcion;
+            $sale->save();
+        }
+        dump("cancel");
         dump($result);
         return $result;
     }
 
-    public function validatePackageReception(SalePoint $salePoint, $receptionCode){
-        $request = new ValidacionRecepcionPaqueteRequest($salePoint, 2, 1, $receptionCode);
+    public function validatePackageReception(SalePoint $salePoint, Package $package){
+        $request = new ValidacionRecepcionPaqueteRequest($salePoint, $this->configService->getInvoiceTypeCode(), $package->reception_code);//internamente ya esta emission offline
         $response = $this->psRepo->validateInvoicePackageSend($request);
+        $sales = explode(',', $package->sales);
+        if($response->transaccion && $response->codigoDescripcion == 'VALIDADA'){
+            $package->state = Package::ENUM_VALID;
+            $package->response_code = $response->codigoEstado;
+            $package->messages = $response->getJsonMessages();
+            $package->save();
+            Sale::whereIn('id', $sales)->update([
+                'state' => Sale::ENUM_VALID
+            ]);
+        }elseif($response->codigoDescripcion='OBSERVADA'){
+            $package->state = Package::ENUM_OBSERVED;
+            $package->response_code = $response->codigoEstado;
+            $package->messages = $response->getJsonMessages();
+            $package->save();
+            Sale::whereIn('id', $sales)->update([
+                'state' => Sale::ENUM_OBSERVED
+            ]);
+        }
         dump("validate on invicing service");
         dump($response);
     }

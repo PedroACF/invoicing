@@ -24,6 +24,7 @@ use PedroACF\Invoicing\Models\SIN\SalePointType;
 use PedroACF\Invoicing\Models\SIN\SectorDocType;
 use PedroACF\Invoicing\Models\SIN\SignificantEventType;
 use PedroACF\Invoicing\Models\SIN\SourceCountry;
+use PedroACF\Invoicing\Models\SYS\Package;
 use PedroACF\Invoicing\Models\SYS\Sale;
 use PedroACF\Invoicing\Models\SYS\SalePoint;
 use PedroACF\Invoicing\Models\SYS\SignificantEvent;
@@ -164,6 +165,14 @@ class OperationService
                         $packer->addFromString("factura_$i.xml", $content);
                         $sale_ids[] = $sale->id;
                     }
+
+                    $package = new Package();
+                    $package->sales = implode(',', $sale_ids);
+                    $package->save();
+                    Sale::whereIn('id', $sale_ids)->update([
+                        'package_id' => $package->id,
+                    ]);
+
                     $count = count($saleGroup);
                     $compress = $packer->compress(\Phar::GZ);
                     $file = file_get_contents($path.'.gz');
@@ -178,13 +187,21 @@ class OperationService
                            'state' => Sale::ENUM_SENT,
                            'significant_event_id' => $event->id
                         ]);
-                        $responseCodes[] = $response->codigoRecepcion;
-                        // TODO: Set codigo recepcion
+                        $packageIds[] = $package->id;
+                        $package->state = Package::ENUM_SENT;
+                        $package->reception_code = $response->codigoRecepcion;
+                        $package->save();
                     }else{
-                        $responseCodes[] = '';
+                        $package->state = Package::ENUM_OBSERVED;
+                        $package->message = $response->getJsonMessages();
+                        $package->save();
+                        $packageIds[] = '0';
                     }
                 }
-                return $responseCodes;
+                return $packageIds;
+            }else{
+                $event->observations = $response->getJsonMessages();
+                $event->save();
             }
         }
         return null;
