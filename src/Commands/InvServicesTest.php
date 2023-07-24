@@ -85,16 +85,12 @@ class InvServicesTest extends Command
         $this->initOperations();
         $salePoints = SalePoint::where('state', 'ACTIVE')->get();
         foreach ($salePoints as $salePoint){
-            //$this->etapaI($salePoint, 1);//OK
-            //$this->etapaII($salePoint, 50);//OK
-            //$this->etapaIII($salePoint, 100);//OK
-            //$this->etapaIV($salePoint, 125);
-//            $this->etapaI($salePoint, 1);
-//            $this->etapaII($salePoint, 1);
-//            $this->etapaIII($salePoint, 1);
-//            $this->etapaIV($salePoint, 1);
-//            $this->etapaV_VI($salePoint, 1);
-            //$this->etapaVII($salePoint, 10);
+            $this->etapaI($salePoint, 1);//OK
+            $this->etapaII($salePoint, 50);//OK
+            $this->etapaIII($salePoint, 100);//OK
+            $this->etapaIV($salePoint, 125);
+            $this->etapaV_VI($salePoint, 10);
+            $this->etapaVII($salePoint, 125);
             $this->etapaXX($salePoint);// Esta no existe, se verifica al final los paquetes enviados
         }
     }
