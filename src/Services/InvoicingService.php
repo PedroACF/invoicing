@@ -74,7 +74,7 @@ class InvoicingService
                 $hash
             );
             $response = $this->psRepo->sendInvoice($request);
-            if($response->transaccion){
+            if($response->transaccion && $response->codigoDescripcion == "VALIDADA"){
                 $sale->reception_code = $response->codigoRecepcion;
                 $sale->state = Sale::ENUM_VALID;
                 $sale->response_code = $response->codigoEstado;

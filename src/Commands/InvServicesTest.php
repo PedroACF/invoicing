@@ -293,9 +293,14 @@ class InvServicesTest extends Command
     private function etapaXX(SalePoint $salePoint){
         $packages = Package::where('state', Package::ENUM_SENT)->get();
         foreach($packages as $package){
-            $invService = app(InvoicingService::class);
-            $invService->validatePackageReception($salePoint, $package);
-            $this->writeMessage("Checando el paquete ".$package->id.": ", false, 'warning');
+            try{
+                $invService = app(InvoicingService::class);
+                $invService->validatePackageReception($salePoint, $package);
+                $this->writeMessage("Checando el paquete ".$package->id.": ", false, 'warning');
+            }catch (\Exception $e){
+                dump($e);
+            }
+
         }
     }
 
@@ -310,11 +315,11 @@ class InvServicesTest extends Command
         $this->writeMessage("Etapa VII: Anulacion (punto de venta: $salePoint->sin_code)", true, 'warning');
         // TODO: Tomar toda la lista de la etapa iv (mejorar esto)
         $forCancelList = Sale::where('sale_point_code', $salePoint->sin_code)->whereNull('cancel_code')->where('state', Sale::ENUM_VALID)->get();
+        $cancelReason = CancelReason::where('descripcion', 'FACTURA MAL EMITIDA')->first();
         $test = 1;
         foreach($forCancelList as $sale){
             try{
                 $service = app(InvoicingService::class);
-                $cancelReason = CancelReason::inRandomOrder()->first();
                 $passed = $service->cancelInvoice($salePoint, $sale, $cancelReason, 1);
             }catch (\Exception $e){
                 dump($e);

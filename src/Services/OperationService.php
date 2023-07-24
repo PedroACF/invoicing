@@ -193,7 +193,7 @@ class OperationService
                         $package->save();
                     }else{
                         $package->state = Package::ENUM_OBSERVED;
-                        $package->message = $response->getJsonMessages();
+                        $package->messages = $response->getJsonMessages();
                         $package->save();
                         $packageIds[] = '0';
                     }
