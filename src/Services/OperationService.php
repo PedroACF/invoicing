@@ -133,7 +133,7 @@ class OperationService
                 $event->save();
                 $this->deleteOldFiles();
                 $saleGroups = array_chunk($sales, 500);
-                $responseCodes = [];
+                $packageIds = [];
                 foreach($saleGroups as $saleGroup){
                     $now = Carbon::now();
                     $path = public_path('vendor/pacf_invoicing/temp_files/pkg_'.$now->getTimestampMs().'.tar');

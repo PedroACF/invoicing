@@ -22,7 +22,7 @@ class SoapRepository
                 ]
             ]),
             'cache_wsdl' => WSDL_CACHE_NONE,
-            'compression' => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE,
+            'compression' => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE
         ]);
     }
 }

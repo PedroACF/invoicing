@@ -11,7 +11,8 @@ class ConsultaPuntoVentaResponse extends BaseResponse
     public static function build($response){
         $data = $response->RespuestaConsultaPuntoVenta ?? (object)[];
         $object = new ConsultaPuntoVentaResponse();
-        $list = is_array($data->listaPuntosVentas)? $data->listaPuntosVentas: [$data->listaPuntosVentas];
+        $salePoints = $data->listaPuntosVentas ?? [];
+        $list = is_array($salePoints)? $salePoints: [$salePoints];
         foreach ($list as $salePoint){
             $remote = RemoteSalePoint::build($salePoint);
             $object->salePoints[] = $remote;

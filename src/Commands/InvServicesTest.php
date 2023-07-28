@@ -46,6 +46,8 @@ class InvServicesTest extends Command
     private $tokenService;
     private $keyService;
 
+    private $CAFC;
+
     /**
      * Create a new command instance.
      *
@@ -88,7 +90,7 @@ class InvServicesTest extends Command
             $this->etapaI($salePoint, 1);//OK
             $this->etapaII($salePoint, 50);//OK
             $this->etapaIII($salePoint, 100);//OK
-            $this->etapaIV($salePoint, 125);
+            $this->etapaIV($salePoint, 2);//emision individual
             $this->etapaV_VI($salePoint, 10);
             $this->etapaVII($salePoint, 125);
             $this->etapaXX($salePoint);// Esta no existe, se verifica al final los paquetes enviados
@@ -175,6 +177,8 @@ class InvServicesTest extends Command
             }
             $showPrompt = false;
         }
+
+        $this->CAFC = $this->ask('Ingrese codigo CAFC (Sólo para eventos 5, 6 y 7)');
 
         $this->configService->setEnvironment(Config::$ENV_TEST);
         $this->configService->setInvoiceMode(Config::$MODE_ELEC);
@@ -348,13 +352,17 @@ class InvServicesTest extends Command
                 try{
                     $cafc = null;
                     if($eventType->codigo_clasificador >= 5){
-                        $cafc = $faker->regexify('[A-Z]{5}[0-4]{3}');
+                        $cafc = $this->CAFC;
+                        if($cafc==null || strlen($cafc)==0){
+                            continue;
+                        }
                     }
                     //crear event
                     $service = app(OperationService::class);
                     $event = $service->createSignificantEvent($salePoint, $eventType, $faker->regexify('[A-Z]{5}[0-4]{3}'));
 
-                    $saleLimit = $salePoint->sin_code != '0'? $faker->numberBetween(1001, 1010): $faker->numberBetween(1, 499);
+                    //$saleLimit = $salePoint->sin_code != '0'? $faker->numberBetween(1001, 1010): $faker->numberBetween(1, 2);
+                    $saleLimit = $salePoint->sin_code != '0'? 0: $faker->numberBetween(1, 2);
                     dump("INVOICES: $saleLimit");
                     //$saleLimit = $salePoint->sin_code != '0'? 1000: $faker->numberBetween(1, 499);
                     $sales = [];

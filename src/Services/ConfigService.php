@@ -81,7 +81,7 @@ class ConfigService extends BaseService
 
     public function getMunicipality(){
         if($this->municipality == null){
-            $model = Config::where('key', 'BUSINESS_NAME')->first();
+            $model = Config::where('key', 'MUNICIPALITY')->first();
             $this->municipality = $model? $model->value: '';
         }
         return $this->municipality;
