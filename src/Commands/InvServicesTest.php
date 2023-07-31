@@ -87,8 +87,8 @@ class InvServicesTest extends Command
         $this->initOperations();
         $salePoints = SalePoint::where('state', 'ACTIVE')->get();
         foreach ($salePoints as $salePoint){
-            $this->etapaI($salePoint, 1);//OK
-            $this->etapaII($salePoint, 50);//OK
+            $this->etapaI($salePoint, 1);//CUIS
+            $this->etapaII($salePoint, 50);//Catalogos
             $this->etapaIII($salePoint, 100);//OK
             $this->etapaIV($salePoint, 2);//emision individual
             $this->etapaV_VI($salePoint, 10);

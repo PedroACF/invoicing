@@ -48,7 +48,7 @@ class ConfigService extends BaseService
     }
 
     public function setNit(string $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'NIT'
         ], [
             'data_type' => 'int',
@@ -70,7 +70,7 @@ class ConfigService extends BaseService
     }
 
     public function setBusinessName(string $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'BUSINESS_NAME'
         ], [
             'data_type' => 'string',
@@ -88,7 +88,7 @@ class ConfigService extends BaseService
     }
 
     public function setMunicipality(string $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'MUNICIPALITY'
         ], [
             'data_type' => 'string',
@@ -110,7 +110,7 @@ class ConfigService extends BaseService
     }
 
     public function setOfficeCode(int $newVal = 0){ //0=>Casa matriz
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'OFFICE_CODE'
         ], [
             'data_type' => 'int',
@@ -128,7 +128,7 @@ class ConfigService extends BaseService
     }
 
     public function setOfficePhone(string $newVal = ''){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'OFFICE_PHONE'
         ], [
             'data_type' => 'string',
@@ -146,7 +146,7 @@ class ConfigService extends BaseService
     }
 
     public function setOfficeAddress(string $newVal = ''){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'OFFICE_ADDRESS'
         ], [
             'data_type' => 'string',
@@ -171,7 +171,7 @@ class ConfigService extends BaseService
         if(!($newVal == 1 || $newVal == 2)){
             throw new BadConfigException("Configuracion de entorno incorrecta");
         }
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'ENVIRONMENT'
         ], [
             'data_type' => 'int',
@@ -193,7 +193,7 @@ class ConfigService extends BaseService
     }
 
     public function setSystemCode(string $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'SYSTEM_CODE'
         ], [
             'data_type' => 'string',
@@ -215,7 +215,7 @@ class ConfigService extends BaseService
     }
 
     public function setInvoiceMode(int $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'INVOICE_MODE'
         ], [
             'data_type' => 'int',
@@ -237,7 +237,7 @@ class ConfigService extends BaseService
     }
 
     public function setInvoiceTypeCode(int $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'INVOICE_TYPE_CODE'
         ], [
             'data_type' => 'int',
@@ -259,7 +259,7 @@ class ConfigService extends BaseService
     }
 
     public function setSectorDocumentCode(int $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'SECTOR_DOCUMENT_CODE'
         ], [
             'data_type' => 'int',
@@ -281,7 +281,7 @@ class ConfigService extends BaseService
     }
 
     public function setLegendId(int $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'LEGEND_ID'
         ], [
             'data_type' => 'int',
@@ -327,7 +327,7 @@ class ConfigService extends BaseService
     }
 
     public function setActivityCode(int $newVal){
-        Config::firstOrCreate([
+        Config::updateOrCreate([
             'key' => 'ACTIVITY_CODE'
         ], [
             'data_type' => 'int',
